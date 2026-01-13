@@ -27,6 +27,54 @@ class PrinterService {
     }
   }
 
+  getStatus() {
+    return {
+      connected: this.enabled && this.printer !== null,
+      printer: this.enabled ? {
+        name: config.printer.name || 'Thermal Printer',
+        model: config.printer.type || 'EPSON',
+        location: config.printer.interface || 'USB',
+        status: 'Online'
+      } : null
+    };
+  }
+
+  async testPrint() {
+    if (!this.enabled || !this.printer) {
+      return {
+        success: false,
+        message: 'Printer not connected'
+      };
+    }
+
+    try {
+      this.printer.clear();
+      this.printer.alignCenter();
+      this.printer.bold(true);
+      this.printer.println('TEST PRINT');
+      this.printer.bold(false);
+      this.printer.println('');
+      this.printer.println('Printer is working correctly!');
+      this.printer.println('');
+      this.printer.println(new Date().toLocaleString());
+      this.printer.println('');
+      this.printer.drawLine();
+      this.printer.cut();
+      
+      await this.printer.execute();
+      
+      return {
+        success: true,
+        message: 'Test print sent successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message
+      };
+    }
+  }
+
   async printReceipt(transaction, clinic) {
     if (!this.enabled || !this.printer) {
       return this.generateReceiptText(transaction, clinic);

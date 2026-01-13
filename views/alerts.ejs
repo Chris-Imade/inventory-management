@@ -169,6 +169,19 @@
       }
     }
     
+    // Reusable toast utility function
+    function showToast(message, type = 'success') {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) existingToast.remove();
+      const iconMap = {success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info'};
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<i data-lucide="${iconMap[type] || 'check-circle'}" class="icon icon-md toast-icon"></i><span class="toast-message">${message}</span>`;
+      document.body.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => {toast.classList.add('hiding'); setTimeout(() => toast.remove(), 300);}, 3000);
+    }
+    
     // Real-time filter functionality
     function applyFiltersRealtime() {
       const severity = document.getElementById('severityFilter').value;
@@ -198,11 +211,11 @@
       }
     });
     
-    async function generateAlerts(){const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch('/api/alerts/generate',{method:'POST'});if(r.ok){alert('Alerts generated successfully');window.location.reload();}else{setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    async function generateAlerts(){const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch('/api/alerts/generate',{method:'POST'});if(r.ok){showToast('Alerts generated successfully','success');setTimeout(()=>window.location.reload(),1000);}else{setButtonLoading(btn,false);}}catch(e){showToast(e.message,'error');setButtonLoading(btn,false);}}
     
-    async function markAsRead(id){const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/alerts/${id}/read`,{method:'PATCH'});if(r.ok){window.location.reload();}else{setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    async function markAsRead(id){const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/alerts/${id}/read`,{method:'PATCH'});if(r.ok){showToast('Alert marked as read','success');setTimeout(()=>window.location.reload(),1000);}else{setButtonLoading(btn,false);}}catch(e){showToast(e.message,'error');setButtonLoading(btn,false);}}
     
-    async function dismissAlert(id){if(!confirm('Dismiss this alert?'))return;const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/alerts/${id}/dismiss`,{method:'PATCH'});if(r.ok){window.location.reload();}else{setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    async function dismissAlert(id){if(!confirm('Dismiss this alert?'))return;const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/alerts/${id}/dismiss`,{method:'PATCH'});if(r.ok){showToast('Alert dismissed','success');setTimeout(()=>window.location.reload(),1000);}else{setButtonLoading(btn,false);}}catch(e){showToast(e.message,'error');setButtonLoading(btn,false);}}
   </script>
 </body>
 </html>

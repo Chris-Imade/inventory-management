@@ -168,11 +168,11 @@
                     </td>
                     <td style="text-align: center;">
                       <div class="flex gap-sm" style="justify-content: center;">
+                        <button class="btn btn-icon btn-secondary tooltip" data-tooltip="Preview" onclick="previewItem('<%= item._id %>')">
+                          <i data-lucide="eye" class="icon icon-md"></i>
+                        </button>
                         <button class="btn btn-icon btn-neutral tooltip" data-tooltip="Edit" onclick="editItem('<%= item._id %>')">
                           <i data-lucide="edit" class="icon icon-md"></i>
-                        </button>
-                        <button class="btn btn-icon btn-secondary tooltip" data-tooltip="Adjust Stock" onclick="adjustStock('<%= item._id %>', '<%= item.itemName %>', <%= item.quantity %>)">
-                          <i data-lucide="bar-chart" class="icon icon-md"></i>
                         </button>
                         <button class="btn btn-icon btn-danger tooltip" data-tooltip="Deactivate" onclick="deactivateItem('<%= item._id %>', '<%= item.itemName %>')">
                           <i data-lucide="trash-2" class="icon icon-md"></i>
@@ -303,38 +303,21 @@
     </div>
   </div>
 
-  <!-- Adjust Stock Modal -->
-  <div id="adjustModal" class="modal">
-    <div class="modal-content">
+  <!-- Preview Item Modal -->
+  <div id="previewModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
-        <h3 class="modal-title">Adjust Stock</h3>
-        <button class="modal-close" onclick="closeAdjustModal()">
+        <h3 class="modal-title">Item Details</h3>
+        <button class="modal-close" onclick="closePreviewModal()">
           <i data-lucide="x" class="icon icon-md"></i>
         </button>
       </div>
-      <form id="adjustStockForm">
-        <input type="hidden" id="adjustItemId" name="itemId">
-        <div class="form-group">
-          <label class="form-label">Item</label>
-          <input type="text" id="adjustItemName" class="form-input" readonly>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Current Quantity</label>
-          <input type="number" id="adjustCurrentQty" class="form-input" readonly>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Adjustment (use negative for decrease) *</label>
-          <input type="number" name="adjustment" class="form-input" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reason *</label>
-          <input type="text" name="reason" class="form-input" required placeholder="e.g., Received new stock, Damaged items removed">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-neutral" onclick="closeAdjustModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary">Adjust Stock</button>
-        </div>
-      </form>
+      <div id="previewContent" style="padding: var(--space-lg);">
+        <!-- Content will be populated dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-neutral" onclick="closePreviewModal()">Close</button>
+      </div>
     </div>
   </div>
 
@@ -479,16 +462,143 @@
       document.getElementById('addItemForm').reset();
     }
 
-    function adjustStock(id, name, currentQty) {
-      document.getElementById('adjustItemId').value = id;
-      document.getElementById('adjustItemName').value = name;
-      document.getElementById('adjustCurrentQty').value = currentQty;
-      document.getElementById('adjustModal').classList.add('active');
+    async function previewItem(id) {
+      try {
+        const response = await fetch(`/api/inventory/${id}`);
+        if (!response.ok) {
+          showToast('Failed to load item details', 'error');
+          return;
+        }
+        const result = await response.json();
+        const item = result.data;
+        
+        // Build comprehensive preview HTML
+        const previewHTML = `
+          <div style="display: grid; gap: var(--space-lg);">
+            <!-- Header Section -->
+            <div style="border-bottom: 2px solid var(--neutral-200); padding-bottom: var(--space-md);">
+              <h2 style="margin: 0 0 var(--space-sm) 0; color: var(--neutral-900);">${item.itemName}</h2>
+              <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap;">
+                <span class="badge badge-primary">${item.category}</span>
+                <span class="badge ${item.isActive ? 'badge-success' : 'badge-neutral'}">${item.isActive ? 'Active' : 'Inactive'}</span>
+                ${item.quantity <= item.minimumStock ? '<span class="badge badge-danger">Low Stock</span>' : ''}
+                ${item.expirationDate && new Date(item.expirationDate) < new Date() ? '<span class="badge badge-danger">Expired</span>' : ''}
+                ${item.expirationDate && new Date(item.expirationDate) < new Date(Date.now() + 90*24*60*60*1000) && new Date(item.expirationDate) >= new Date() ? '<span class="badge badge-warning">Expiring Soon</span>' : ''}
+              </div>
+            </div>
+            
+            <!-- Identification Section -->
+            <div>
+              <h4 style="margin: 0 0 var(--space-md) 0; color: var(--neutral-700); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Identification</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md);">
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">SKU</div>
+                  <div style="font-family: var(--font-mono); font-weight: 500;"><code>${item.sku}</code></div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Barcode</div>
+                  <div style="font-family: var(--font-mono); font-weight: 500;"><code>${item.barcode || 'N/A'}</code></div>
+                </div>
+                ${item.batchNumber ? `
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Batch Number</div>
+                  <div style="font-weight: 500;">${item.batchNumber}</div>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            
+            <!-- Stock & Pricing Section -->
+            <div>
+              <h4 style="margin: 0 0 var(--space-md) 0; color: var(--neutral-700); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Stock & Pricing</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-md);">
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Current Stock</div>
+                  <div style="font-size: 1.5rem; font-weight: 600; color: ${item.quantity <= item.minimumStock ? 'var(--danger)' : 'var(--success)'};"><strong>${item.quantity}</strong> ${item.unitType}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Minimum Stock</div>
+                  <div style="font-size: 1.125rem; font-weight: 500;">${item.minimumStock} ${item.unitType}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Unit Price</div>
+                  <div style="font-size: 1.125rem; font-weight: 500; font-family: var(--font-mono);">₦${item.unitPrice.toLocaleString('en-NG', {minimumFractionDigits: 2})}</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Selling Price</div>
+                  <div style="font-size: 1.125rem; font-weight: 500; font-family: var(--font-mono); color: var(--success);">₦${item.sellingPrice.toLocaleString('en-NG', {minimumFractionDigits: 2})}</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Storage & Expiry Section -->
+            <div>
+              <h4 style="margin: 0 0 var(--space-md) 0; color: var(--neutral-700); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Storage & Expiry</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md);">
+                ${item.storageLocation ? `
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Storage Location</div>
+                  <div style="font-weight: 500;">${item.storageLocation}</div>
+                </div>
+                ` : ''}
+                ${item.expirationDate ? `
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Expiration Date</div>
+                  <div style="font-weight: 500; color: ${new Date(item.expirationDate) < new Date() ? 'var(--danger)' : 'var(--neutral-900)'};"><i data-lucide="calendar" class="icon icon-sm" style="margin-right: 0.25rem;"></i>${new Date(item.expirationDate).toLocaleDateString('en-NG')}</div>
+                </div>
+                ` : '<div><div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Expiration Date</div><div style="color: var(--neutral-500);">Not specified</div></div>'}
+              </div>
+            </div>
+            
+            <!-- Supplier Information Section -->
+            ${item.manufacturer || item.supplier ? `
+            <div>
+              <h4 style="margin: 0 0 var(--space-md) 0; color: var(--neutral-700); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Supplier Information</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-md);">
+                ${item.manufacturer ? `
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Manufacturer</div>
+                  <div style="font-weight: 500;">${item.manufacturer}</div>
+                </div>
+                ` : ''}
+                ${item.supplier ? `
+                <div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Supplier</div>
+                  <div style="font-weight: 500;">${item.supplier}</div>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            ` : ''}
+            
+            <!-- Description Section -->
+            ${item.description ? `
+            <div>
+              <h4 style="margin: 0 0 var(--space-md) 0; color: var(--neutral-700); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Description</h4>
+              <div style="padding: var(--space-md); background: var(--neutral-50); border-radius: 0.375rem; color: var(--neutral-700); line-height: 1.6;">${item.description}</div>
+            </div>
+            ` : ''}
+            
+            <!-- Metadata Section -->
+            <div style="border-top: 1px solid var(--neutral-200); padding-top: var(--space-md);">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-sm); font-size: 0.75rem; color: var(--neutral-600);">
+                <div><i data-lucide="clock" class="icon icon-sm" style="margin-right: 0.25rem;"></i>Created: ${new Date(item.createdAt).toLocaleString('en-NG')}</div>
+                <div><i data-lucide="refresh-cw" class="icon icon-sm" style="margin-right: 0.25rem;"></i>Updated: ${new Date(item.updatedAt).toLocaleString('en-NG')}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('previewContent').innerHTML = previewHTML;
+        lucide.createIcons();
+        document.getElementById('previewModal').classList.add('active');
+      } catch (error) {
+        showToast('Error loading item: ' + error.message, 'error');
+      }
     }
-
-    function closeAdjustModal() {
-      document.getElementById('adjustModal').classList.remove('active');
-      document.getElementById('adjustStockForm').reset();
+    
+    function closePreviewModal() {
+      document.getElementById('previewModal').classList.remove('active');
     }
 
     // Loading state helper functions
@@ -522,48 +632,19 @@
         });
         
         if (response.ok) {
-          alert('Item added successfully!');
-          window.location.reload();
+          showToast('Item added successfully!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
         } else {
           const error = await response.json();
-          alert('Error: ' + (error.error || 'Failed to add item'));
+          showToast(error.error || 'Failed to add item', 'error');
           setButtonLoading(submitBtn, false);
         }
       } catch (error) {
-        alert('Error: ' + error.message);
+        showToast(error.message, 'error');
         setButtonLoading(submitBtn, false);
       }
     });
 
-    document.getElementById('adjustStockForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      const formData = new FormData(e.target);
-      const id = formData.get('itemId');
-      const adjustment = parseInt(formData.get('adjustment'));
-      const reason = formData.get('reason');
-      
-      setButtonLoading(submitBtn, true);
-      try {
-        const response = await fetch(`/api/inventory/${id}/adjust`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ adjustment, reason })
-        });
-        
-        if (response.ok) {
-          alert('Stock adjusted successfully!');
-          window.location.reload();
-        } else {
-          const error = await response.json();
-          alert('Error: ' + (error.error || 'Failed to adjust stock'));
-          setButtonLoading(submitBtn, false);
-        }
-      } catch (error) {
-        alert('Error: ' + error.message);
-        setButtonLoading(submitBtn, false);
-      }
-    });
 
     document.getElementById('editItemForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -582,15 +663,15 @@
         });
         
         if (response.ok) {
-          alert('Item updated successfully!');
-          window.location.reload();
+          showToast('Item updated successfully!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
         } else {
           const error = await response.json();
-          alert('Error: ' + (error.error || 'Failed to update item'));
+          showToast(error.error || 'Failed to update item', 'error');
           setButtonLoading(submitBtn, false);
         }
       } catch (error) {
-        alert('Error: ' + error.message);
+        showToast(error.message, 'error');
         setButtonLoading(submitBtn, false);
       }
     });
@@ -673,14 +754,14 @@
       try {
         const response = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
         if (response.ok) {
-          alert('Item deactivated successfully!');
-          window.location.reload();
+          showToast('Item deactivated successfully!', 'success');
+          setTimeout(() => window.location.reload(), 1000);
         } else {
-          alert('Failed to deactivate item');
+          showToast('Failed to deactivate item', 'error');
           setButtonLoading(btn, false);
         }
       } catch (error) {
-        alert('Error: ' + error.message);
+        showToast(error.message, 'error');
         setButtonLoading(btn, false);
       }
     }
@@ -689,7 +770,7 @@
       try {
         const response = await fetch(`/api/inventory/${id}`);
         if (!response.ok) {
-          alert('Failed to load item details');
+          showToast('Failed to load item details', 'error');
           return;
         }
         const result = await response.json();
@@ -715,7 +796,7 @@
         
         document.getElementById('editModal').classList.add('active');
       } catch (error) {
-        alert('Error loading item: ' + error.message);
+        showToast('Error loading item: ' + error.message, 'error');
       }
     }
     
@@ -731,31 +812,39 @@
       }
     }
 
-    // Click-to-copy functionality with toast notification
-    function showToast(message) {
+    // Reusable toast utility function
+    function showToast(message, type = 'success') {
       // Remove existing toast if any
       const existingToast = document.querySelector('.toast');
       if (existingToast) {
         existingToast.remove();
       }
 
+      // Icon mapping for different toast types
+      const iconMap = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        warning: 'alert-triangle',
+        info: 'info'
+      };
+
       // Create toast element
       const toast = document.createElement('div');
-      toast.className = 'toast';
+      toast.className = `toast toast-${type}`;
       toast.innerHTML = `
-        <i data-lucide="check-circle" class="icon icon-md" style="color: var(--success);"></i>
-        <span>${message}</span>
+        <i data-lucide="${iconMap[type] || 'check-circle'}" class="icon icon-md toast-icon"></i>
+        <span class="toast-message">${message}</span>
       `;
       document.body.appendChild(toast);
       
       // Initialize Lucide icons for the toast
       lucide.createIcons();
 
-      // Auto-hide after 2 seconds
+      // Auto-hide after 3 seconds
       setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-      }, 2000);
+      }, 3000);
     }
 
     async function copyToClipboard(text, element) {

@@ -198,6 +198,19 @@
       }
     }
     
+    // Reusable toast utility function
+    function showToast(message, type = 'success') {
+      const existingToast = document.querySelector('.toast');
+      if (existingToast) existingToast.remove();
+      const iconMap = {success: 'check-circle', error: 'alert-circle', warning: 'alert-triangle', info: 'info'};
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<i data-lucide="${iconMap[type] || 'check-circle'}" class="icon icon-md toast-icon"></i><span class="toast-message">${message}</span>`;
+      document.body.appendChild(toast);
+      lucide.createIcons();
+      setTimeout(() => {toast.classList.add('hiding'); setTimeout(() => toast.remove(), 300);}, 3000);
+    }
+    
     // Real-time filter and search functionality
     let filterTimeout;
     
@@ -277,9 +290,9 @@
       document.getElementById('endDate').addEventListener('change', applyFiltersRealtime);
     });
     
-    async function viewDetails(id){try{const r=await fetch(`/api/transactions/${id}`);if(!r.ok){alert('Failed to load transaction details');return;}const result=await r.json();const txn=result.data;let details=`Transaction ID: ${txn.transactionId}\n`;details+=`Date: ${new Date(txn.createdAt).toLocaleString('en-NG')}\n`;details+=`Status: ${txn.status}\n\n`;if(txn.patientName)details+=`Patient: ${txn.patientName}\n`;if(txn.patientId)details+=`Patient ID: ${txn.patientId}\n`;if(txn.prescriptionNumber)details+=`Prescription: ${txn.prescriptionNumber}\n`;details+=`\nItems:\n`;txn.lineItems.forEach((item,i)=>{details+=`${i+1}. ${item.itemSnapshot.itemName} (${item.itemSnapshot.sku})\n`;details+=`   Qty: ${item.quantity} @ ₦${item.unitPrice.toLocaleString('en-NG',{minimumFractionDigits:2})} = ₦${item.subtotal.toLocaleString('en-NG',{minimumFractionDigits:2})}\n`;});details+=`\nTotal: ₦${txn.totalAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}\n`;details+=`Payment: ${txn.paymentMethod.toUpperCase()}\n`;if(txn.notes)details+=`Notes: ${txn.notes}\n`;if(txn.status==='CANCELLED'){details+=`\nCancelled: ${new Date(txn.cancelledAt).toLocaleString('en-NG')}\n`;details+=`Reason: ${txn.cancellationReason}\n`;}alert(details);}catch(e){alert('Error: '+e.message);}}
+    async function viewDetails(id){try{const r=await fetch(`/api/transactions/${id}`);if(!r.ok){showToast('Failed to load transaction details','error');return;}const result=await r.json();const txn=result.data;let details=`Transaction ID: ${txn.transactionId}\n`;details+=`Date: ${new Date(txn.createdAt).toLocaleString('en-NG')}\n`;details+=`Status: ${txn.status}\n\n`;if(txn.patientName)details+=`Patient: ${txn.patientName}\n`;if(txn.patientId)details+=`Patient ID: ${txn.patientId}\n`;if(txn.prescriptionNumber)details+=`Prescription: ${txn.prescriptionNumber}\n`;details+=`\nItems:\n`;txn.lineItems.forEach((item,i)=>{details+=`${i+1}. ${item.itemSnapshot.itemName} (${item.itemSnapshot.sku})\n`;details+=`   Qty: ${item.quantity} @ ₦${item.unitPrice.toLocaleString('en-NG',{minimumFractionDigits:2})} = ₦${item.subtotal.toLocaleString('en-NG',{minimumFractionDigits:2})}\n`;});details+=`\nTotal: ₦${txn.totalAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}\n`;details+=`Payment: ${txn.paymentMethod.toUpperCase()}\n`;if(txn.notes)details+=`Notes: ${txn.notes}\n`;if(txn.status==='CANCELLED'){details+=`\nCancelled: ${new Date(txn.cancelledAt).toLocaleString('en-NG')}\n`;details+=`Reason: ${txn.cancellationReason}\n`;}alert(details);}catch(e){showToast(e.message,'error');}}
     
-    async function cancelTransaction(id){const reason=prompt('Enter cancellation reason:');if(!reason)return;const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/transactions/${id}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cancellationReason:reason})});if(r.ok){alert('Transaction cancelled successfully');window.location.reload();}else{const e=await r.json();alert('Failed: '+(e.error||'Unknown error'));setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    async function cancelTransaction(id){const reason=prompt('Enter cancellation reason:');if(!reason)return;const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/transactions/${id}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cancellationReason:reason})});if(r.ok){showToast('Transaction cancelled successfully','success');setTimeout(()=>window.location.reload(),1000);}else{const e=await r.json();showToast(e.error||'Failed to cancel transaction','error');setButtonLoading(btn,false);}}catch(e){showToast(e.message,'error');setButtonLoading(btn,false);}}
     
     function printReceipt(id){window.open(`/api/transactions/${id}/print`,'_blank');}
   </script>

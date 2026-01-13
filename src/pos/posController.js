@@ -5,7 +5,8 @@ const { asyncHandler } = require('../utils/errorHandler');
 const scanBarcode = asyncHandler(async (req, res) => {
   const { barcode } = req.body;
   
-  const item = await inventoryService.getItemByBarcode(barcode);
+  // Try to find by barcode first, then by SKU
+  let item = await inventoryService.getItemByBarcodeOrSKU(barcode);
   
   res.status(200).json({
     success: true,

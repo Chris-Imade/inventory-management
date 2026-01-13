@@ -85,6 +85,22 @@ class InventoryService {
     return item;
   }
 
+  async getItemByBarcodeOrSKU(searchValue) {
+    // Try to find by barcode first, then by SKU
+    const item = await InventoryItem.findOne({
+      $or: [
+        { barcode: searchValue },
+        { sku: searchValue }
+      ],
+      isActive: true
+    });
+    
+    if (!item) {
+      throw new AppError('Item not found with this barcode or SKU', 404);
+    }
+    return item;
+  }
+
   async updateItem(id, updateData) {
     const item = await InventoryItem.findById(id);
     if (!item) {

@@ -77,18 +77,16 @@ const getDailySummary = asyncHandler(async (req, res) => {
 
 const printReceipt = asyncHandler(async (req, res) => {
   const transaction = await transactionService.getTransactionById(req.params.id);
-  const result = await printerService.printReceipt(transaction, config.clinic);
   
-  if (result.success) {
-    transaction.receiptPrinted = true;
-    transaction.printedAt = new Date();
-    await transaction.save();
-  }
+  // Mark receipt as printed
+  transaction.receiptPrinted = true;
+  transaction.printedAt = new Date();
+  await transaction.save();
   
-  res.status(200).json({
-    success: result.success,
-    message: result.message,
-    receipt: result.text,
+  // Render HTML receipt page
+  res.render('receipt', {
+    transaction,
+    clinic: config.clinic
   });
 });
 

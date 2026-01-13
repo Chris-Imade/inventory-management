@@ -7,6 +7,7 @@ const transactionRoutes = require('./transactionRoutes');
 const posRoutes = require('./posRoutes');
 const alertRoutes = require('./alertRoutes');
 const reportRoutes = require('./reportRoutes');
+const printerRoutes = require('./printerRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/inventory', inventoryRoutes);
@@ -14,5 +15,6 @@ router.use('/transactions', transactionRoutes);
 router.use('/pos', posRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/reports', reportRoutes);
+router.use('/printer', printerRoutes);
 
 module.exports = router;

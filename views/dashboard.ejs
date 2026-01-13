@@ -72,9 +72,26 @@
           <p class="text-muted" style="margin: 0; font-size: 0.875rem;">System overview and key metrics</p>
         </div>
         <div class="flex items-center gap-md">
-          <% if (typeof user !== 'undefined' && user) { %>
-            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;"><i data-lucide="user" class="icon icon-sm"></i><%= user %></span>
-          <% } %>
+          <!-- Device Connection Indicators -->
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <!-- Printer Status -->
+            <div id="printerStatus" class="device-status" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="showPrinterInfo()">
+              <div class="status-indicator" id="printerIndicator" style="width: 12px; height: 12px; border-radius: 50%; background: var(--neutral-400); box-shadow: 0 0 0 2px rgba(0,0,0,0.1);"></div>
+              <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="printer" class="icon icon-sm" style="color: var(--neutral-600);"></i>
+                <span style="font-size: 0.75rem; color: var(--neutral-600); font-weight: 500;">Printer</span>
+              </div>
+            </div>
+            
+            <!-- Barcode Scanner Status -->
+            <div class="device-status" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="status-indicator" id="scannerIndicator" style="width: 12px; height: 12px; border-radius: 50%; background: var(--neutral-400); box-shadow: 0 0 0 2px rgba(0,0,0,0.1);"></div>
+              <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <i data-lucide="scan" class="icon icon-sm" style="color: var(--neutral-600);"></i>
+                <span style="font-size: 0.75rem; color: var(--neutral-600); font-weight: 500;">Scanner</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -87,19 +104,19 @@
             <div class="stat-value"><%= stats.totalItems %></div>
           </div>
 
-          <div class="stat-card">
+          <div class="stat-card" onclick="openLowStockModal()" style="cursor: pointer;">
             <div class="stat-icon"><i data-lucide="alert-triangle" class="icon icon-xl" style="color: var(--warning);"></i></div>
             <div class="stat-label">Low Stock</div>
             <div class="stat-value"><%= stats.lowStockItems %></div>
           </div>
 
-          <div class="stat-card">
+          <div class="stat-card" onclick="openExpiredItemsModal()" style="cursor: pointer;">
             <div class="stat-icon"><i data-lucide="calendar-x" class="icon icon-xl" style="color: var(--danger);"></i></div>
             <div class="stat-label">Expired Items</div>
             <div class="stat-value"><%= stats.expiredItems %></div>
           </div>
 
-          <div class="stat-card">
+          <div class="stat-card" onclick="openTotalValueModal()" style="cursor: pointer;">
             <div class="stat-icon"><i data-lucide="dollar-sign" class="icon icon-xl" style="color: var(--success);"></i></div>
             <div class="stat-label">Total Value</div>
             <div class="stat-value">₦<%= stats.totalValue.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
@@ -193,6 +210,78 @@
     </main>
   </div>
 
+  <!-- Low Stock Items Modal -->
+  <div id="lowStockModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Low Stock Items</h3>
+        <button class="modal-close" onclick="closeLowStockModal()">
+          <i data-lucide="x" class="icon icon-md"></i>
+        </button>
+      </div>
+      <div id="lowStockContent" style="padding: var(--space-lg);">
+        <div style="text-align: center; padding: 2rem;">
+          <div class="spinner" style="margin: 0 auto;"></div>
+          <p style="margin-top: 1rem; color: var(--neutral-600);">Loading low stock items...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expired Items Modal -->
+  <div id="expiredItemsModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Expired Items</h3>
+        <button class="modal-close" onclick="closeExpiredItemsModal()">
+          <i data-lucide="x" class="icon icon-md"></i>
+        </button>
+      </div>
+      <div id="expiredItemsContent" style="padding: var(--space-lg);">
+        <div style="text-align: center; padding: 2rem;">
+          <div class="spinner" style="margin: 0 auto;"></div>
+          <p style="margin-top: 1rem; color: var(--neutral-600);">Loading expired items...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Value Modal -->
+  <div id="totalValueModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Total Inventory Value Calculation</h3>
+        <button class="modal-close" onclick="closeTotalValueModal()">
+          <i data-lucide="x" class="icon icon-md"></i>
+        </button>
+      </div>
+      <div id="totalValueContent" style="padding: var(--space-lg);">
+        <div style="text-align: center; padding: 2rem;">
+          <div class="spinner" style="margin: 0 auto;"></div>
+          <p style="margin-top: 1rem; color: var(--neutral-600);">Calculating inventory value...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Printer Info Modal -->
+  <div id="printerInfoModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Printer Connection</h3>
+        <button class="modal-close" onclick="closePrinterInfoModal()">
+          <i data-lucide="x" class="icon icon-md"></i>
+        </button>
+      </div>
+      <div id="printerInfoContent" style="padding: var(--space-lg);">
+        <div style="text-align: center; padding: 2rem;">
+          <div class="spinner" style="margin: 0 auto;"></div>
+          <p style="margin-top: 1rem; color: var(--neutral-600);">Checking printer status...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Sidebar toggle functionality
     function toggleSidebar() {
@@ -235,6 +324,435 @@
         maximumFractionDigits: 2 
       });
     }
+
+    // Low Stock Modal
+    async function openLowStockModal() {
+      document.getElementById('lowStockModal').classList.add('active');
+      try {
+        const response = await fetch('/api/inventory/low-stock');
+        const result = await response.json();
+        const items = result.data;
+        
+        let html = '';
+        if (items.length === 0) {
+          html = '<div style="text-align: center; padding: 3rem; color: var(--neutral-500);"><i data-lucide="check-circle" class="icon" style="width: 48px; height: 48px; color: var(--success);"></i><p style="margin-top: 1rem;">All items are adequately stocked!</p></div>';
+        } else {
+          html = `
+            <div style="margin-bottom: 1rem;">
+              <p style="color: var(--neutral-700); margin-bottom: 1rem;">The following <strong>${items.length}</strong> items need restocking:</p>
+            </div>
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item Name</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th>Current Stock</th>
+                    <th>Minimum Stock</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          items.forEach(item => {
+            const stockPercentage = (item.quantity / item.minimumStock) * 100;
+            const statusColor = item.quantity === 0 ? 'danger' : (stockPercentage < 50 ? 'danger' : 'warning');
+            const statusText = item.quantity === 0 ? 'Out of Stock' : 'Low Stock';
+            
+            html += `
+              <tr>
+                <td><strong>${item.itemName}</strong></td>
+                <td><code style="font-size: 0.8rem;">${item.sku}</code></td>
+                <td><span class="badge badge-neutral">${item.category}</span></td>
+                <td style="font-weight: 600; color: var(--${statusColor});">${item.quantity} ${item.unitType}</td>
+                <td>${item.minimumStock} ${item.unitType}</td>
+                <td><span class="badge badge-${statusColor}">${statusText}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--neutral-200); text-align: right;">
+              <a href="/inventory?lowStock=true" class="btn btn-primary">Go to Inventory</a>
+            </div>
+          `;
+        }
+        
+        document.getElementById('lowStockContent').innerHTML = html;
+        lucide.createIcons();
+      } catch (error) {
+        document.getElementById('lowStockContent').innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--danger);"><i data-lucide="alert-circle" class="icon" style="width: 48px; height: 48px;"></i><p style="margin-top: 1rem;">Failed to load low stock items</p></div>';
+        lucide.createIcons();
+      }
+    }
+
+    function closeLowStockModal() {
+      document.getElementById('lowStockModal').classList.remove('active');
+    }
+
+    // Expired Items Modal
+    async function openExpiredItemsModal() {
+      document.getElementById('expiredItemsModal').classList.add('active');
+      try {
+        const response = await fetch('/api/inventory/expired');
+        const result = await response.json();
+        const items = result.data;
+        
+        let html = '';
+        if (items.length === 0) {
+          html = '<div style="text-align: center; padding: 3rem; color: var(--neutral-500);"><i data-lucide="check-circle" class="icon" style="width: 48px; height: 48px; color: var(--success);"></i><p style="margin-top: 1rem;">No expired items found!</p></div>';
+        } else {
+          html = `
+            <div style="margin-bottom: 1rem;">
+              <p style="color: var(--neutral-700); margin-bottom: 1rem;">The following <strong>${items.length}</strong> items are expired or expiring soon:</p>
+            </div>
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item Name</th>
+                    <th>SKU</th>
+                    <th>Batch Number</th>
+                    <th>Expiration Date</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          items.forEach(item => {
+            const expiryDate = new Date(item.expirationDate);
+            const now = new Date();
+            const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+            const isExpired = daysUntilExpiry < 0;
+            const statusColor = isExpired ? 'danger' : 'warning';
+            const statusText = isExpired ? 'Expired' : `Expires in ${daysUntilExpiry} days`;
+            
+            html += `
+              <tr>
+                <td><strong>${item.itemName}</strong></td>
+                <td><code style="font-size: 0.8rem;">${item.sku}</code></td>
+                <td>${item.batchNumber || 'N/A'}</td>
+                <td style="color: var(--${statusColor});">${expiryDate.toLocaleDateString('en-NG')}</td>
+                <td>${item.quantity} ${item.unitType}</td>
+                <td><span class="badge badge-${statusColor}">${statusText}</span></td>
+              </tr>
+            `;
+          });
+          
+          html += `
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--neutral-200); text-align: right;">
+              <a href="/inventory?expired=true" class="btn btn-danger">Review Items</a>
+            </div>
+          `;
+        }
+        
+        document.getElementById('expiredItemsContent').innerHTML = html;
+        lucide.createIcons();
+      } catch (error) {
+        document.getElementById('expiredItemsContent').innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--danger);"><i data-lucide="alert-circle" class="icon" style="width: 48px; height: 48px;"></i><p style="margin-top: 1rem;">Failed to load expired items</p></div>';
+        lucide.createIcons();
+      }
+    }
+
+    function closeExpiredItemsModal() {
+      document.getElementById('expiredItemsModal').classList.remove('active');
+    }
+
+    // Total Value Modal
+    async function openTotalValueModal() {
+      document.getElementById('totalValueModal').classList.add('active');
+      try {
+        const response = await fetch('/api/inventory?limit=1000');
+        const result = await response.json();
+        const items = result.data;
+        
+        let totalValue = 0;
+        let categoryBreakdown = {};
+        let itemCount = 0;
+        
+        items.forEach(item => {
+          const itemValue = item.quantity * item.unitPrice;
+          totalValue += itemValue;
+          itemCount++;
+          
+          if (!categoryBreakdown[item.category]) {
+            categoryBreakdown[item.category] = {
+              value: 0,
+              count: 0,
+              items: []
+            };
+          }
+          
+          categoryBreakdown[item.category].value += itemValue;
+          categoryBreakdown[item.category].count++;
+          categoryBreakdown[item.category].items.push({
+            name: item.itemName,
+            value: itemValue,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice
+          });
+        });
+        
+        let html = `
+          <div style="display: grid; gap: var(--space-lg);">
+            <!-- Explanation Section -->
+            <div style="background: var(--neutral-50); padding: var(--space-md); border-radius: 0.375rem; border-left: 4px solid var(--primary);">
+              <h4 style="margin: 0 0 var(--space-sm) 0; color: var(--neutral-900);">How is Total Value Calculated?</h4>
+              <p style="margin: 0; color: var(--neutral-700); line-height: 1.6;">
+                The total inventory value is calculated by multiplying the <strong>quantity in stock</strong> by the <strong>unit price</strong> for each item, then summing all items together.
+              </p>
+              <div style="margin-top: var(--space-md); padding: var(--space-sm); background: white; border-radius: 0.25rem; font-family: var(--font-mono); font-size: 0.875rem;">
+                Total Value = Σ (Quantity × Unit Price)
+              </div>
+            </div>
+            
+            <!-- Summary Section -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-md);">
+              <div style="text-align: center; padding: var(--space-md); background: var(--success-light); border-radius: 0.375rem;">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Total Value</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">${formatCurrency(totalValue)}</div>
+              </div>
+              <div style="text-align: center; padding: var(--space-md); background: var(--neutral-100); border-radius: 0.375rem;">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Total Items</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--neutral-900);">${itemCount}</div>
+              </div>
+              <div style="text-align: center; padding: var(--space-md); background: var(--neutral-100); border-radius: 0.375rem;">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem;">Categories</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--neutral-900);">${Object.keys(categoryBreakdown).length}</div>
+              </div>
+            </div>
+            
+            <!-- Category Breakdown -->
+            <div>
+              <h4 style="margin: 0 0 var(--space-md) 0; color: var(--neutral-700); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Value by Category</h4>
+              <div style="display: grid; gap: var(--space-sm);">
+        `;
+        
+        // Sort categories by value
+        const sortedCategories = Object.entries(categoryBreakdown).sort((a, b) => b[1].value - a[1].value);
+        
+        sortedCategories.forEach(([category, data]) => {
+          const percentage = ((data.value / totalValue) * 100).toFixed(1);
+          html += `
+            <div style="padding: var(--space-md); border: 1px solid var(--neutral-200); border-radius: 0.375rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+                <div>
+                  <span class="badge badge-primary" style="text-transform: capitalize;">${category}</span>
+                  <span style="font-size: 0.75rem; color: var(--neutral-600); margin-left: 0.5rem;">${data.count} items</span>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 1.125rem; font-weight: 600; color: var(--neutral-900);">${formatCurrency(data.value)}</div>
+                  <div style="font-size: 0.75rem; color: var(--neutral-600);">${percentage}% of total</div>
+                </div>
+              </div>
+              <div style="height: 6px; background: var(--neutral-200); border-radius: 3px; overflow: hidden;">
+                <div style="height: 100%; background: var(--primary); width: ${percentage}%;"></div>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `
+              </div>
+            </div>
+            
+            <!-- Note -->
+            <div style="padding: var(--space-md); background: var(--neutral-50); border-radius: 0.375rem; font-size: 0.875rem; color: var(--neutral-600);">
+              <i data-lucide="info" class="icon icon-sm" style="margin-right: 0.25rem;"></i>
+              This calculation is based on unit prices (cost price), not selling prices. It represents the total investment in current inventory.
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('totalValueContent').innerHTML = html;
+        lucide.createIcons();
+      } catch (error) {
+        document.getElementById('totalValueContent').innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--danger);"><i data-lucide="alert-circle" class="icon" style="width: 48px; height: 48px;"></i><p style="margin-top: 1rem;">Failed to calculate inventory value</p></div>';
+        lucide.createIcons();
+      }
+    }
+
+    function closeTotalValueModal() {
+      document.getElementById('totalValueModal').classList.remove('active');
+    }
+
+    // Close modals on outside click
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('active');
+      }
+    }
+
+    // Device Connection Status Management
+    let printerConnected = false;
+    let scannerConnected = false;
+    let printerInfo = null;
+
+    async function checkDeviceConnections() {
+      // Check printer connection
+      try {
+        const printerResponse = await fetch('/api/printer/status');
+        if (printerResponse.ok) {
+          const result = await printerResponse.json();
+          printerConnected = result.connected || false;
+          printerInfo = result.printer || null;
+          updatePrinterStatus(printerConnected);
+        } else {
+          printerConnected = false;
+          updatePrinterStatus(false);
+        }
+      } catch (error) {
+        printerConnected = false;
+        updatePrinterStatus(false);
+      }
+
+      // Check scanner connection (simulated - hardware scanners don't have APIs)
+      // Scanner is considered connected if it's been used recently
+      const lastScanTime = localStorage.getItem('lastScanTime');
+      if (lastScanTime) {
+        const timeSinceLastScan = Date.now() - parseInt(lastScanTime);
+        scannerConnected = timeSinceLastScan < 300000; // 5 minutes
+      } else {
+        scannerConnected = false;
+      }
+      updateScannerStatus(scannerConnected);
+    }
+
+    function updatePrinterStatus(connected) {
+      const indicator = document.getElementById('printerIndicator');
+      if (connected) {
+        indicator.style.background = 'var(--success)';
+        indicator.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.2), 0 0 8px rgba(34, 197, 94, 0.4)';
+      } else {
+        indicator.style.background = 'var(--neutral-400)';
+        indicator.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.1)';
+      }
+    }
+
+    function updateScannerStatus(connected) {
+      const indicator = document.getElementById('scannerIndicator');
+      if (connected) {
+        indicator.style.background = 'var(--success)';
+        indicator.style.boxShadow = '0 0 0 2px rgba(34, 197, 94, 0.2), 0 0 8px rgba(34, 197, 94, 0.4)';
+      } else {
+        indicator.style.background = 'var(--neutral-400)';
+        indicator.style.boxShadow = '0 0 0 2px rgba(0,0,0,0.1)';
+      }
+    }
+
+    // Printer Info Modal
+    function showPrinterInfo() {
+      document.getElementById('printerInfoModal').classList.add('active');
+      
+      let html = '';
+      if (printerConnected && printerInfo) {
+        html = `
+          <div style="display: grid; gap: var(--space-lg);">
+            <!-- Connection Status -->
+            <div style="text-align: center; padding: var(--space-lg); background: var(--success-light); border-radius: 0.5rem;">
+              <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: var(--success); border-radius: 50%; margin-bottom: var(--space-md);">
+                <i data-lucide="printer" class="icon" style="width: 32px; height: 32px; color: white;"></i>
+              </div>
+              <h4 style="margin: 0 0 var(--space-sm) 0; color: var(--success); font-size: 1.125rem;">Printer Connected</h4>
+              <p style="margin: 0; color: var(--neutral-700); font-size: 0.875rem;">Ready to print receipts and reports</p>
+            </div>
+
+            <!-- Printer Details -->
+            <div style="display: grid; gap: var(--space-md);">
+              <div style="padding: var(--space-md); background: var(--neutral-50); border-radius: 0.375rem; border-left: 3px solid var(--primary);">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Printer Name</div>
+                <div style="font-size: 1rem; font-weight: 600; color: var(--neutral-900);">${printerInfo.name || 'Default Printer'}</div>
+              </div>
+
+              ${printerInfo.model ? `
+              <div style="padding: var(--space-md); background: var(--neutral-50); border-radius: 0.375rem; border-left: 3px solid var(--primary);">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Model</div>
+                <div style="font-size: 1rem; font-weight: 600; color: var(--neutral-900);">${printerInfo.model}</div>
+              </div>
+              ` : ''}
+
+              ${printerInfo.location ? `
+              <div style="padding: var(--space-md); background: var(--neutral-50); border-radius: 0.375rem; border-left: 3px solid var(--primary);">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Location</div>
+                <div style="font-size: 1rem; font-weight: 600; color: var(--neutral-900);">${printerInfo.location}</div>
+              </div>
+              ` : ''}
+
+              <div style="padding: var(--space-md); background: var(--neutral-50); border-radius: 0.375rem; border-left: 3px solid var(--primary);">
+                <div style="font-size: 0.75rem; color: var(--neutral-600); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">Status</div>
+                <div style="font-size: 1rem; font-weight: 600; color: var(--success);">Online & Ready</div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: var(--space-sm); padding-top: var(--space-md); border-top: 1px solid var(--neutral-200);">
+              <button class="btn btn-sm btn-primary" onclick="testPrint()" style="flex: 1;">
+                <i data-lucide="printer" class="icon icon-sm"></i>
+                <span>Test Print</span>
+              </button>
+              <button class="btn btn-sm btn-neutral" onclick="checkDeviceConnections()" style="flex: 1;">
+                <i data-lucide="refresh-cw" class="icon icon-sm"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        html = `
+          <div style="text-align: center; padding: var(--space-xl);">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: var(--neutral-200); border-radius: 50%; margin-bottom: var(--space-md);">
+              <i data-lucide="printer" class="icon" style="width: 32px; height: 32px; color: var(--neutral-500);"></i>
+            </div>
+            <h4 style="margin: 0 0 var(--space-sm) 0; color: var(--neutral-700); font-size: 1.125rem;">No Printer Connected</h4>
+            <p style="margin: 0 0 var(--space-lg) 0; color: var(--neutral-600); font-size: 0.875rem; line-height: 1.6;">
+              No printer is currently connected to the system.<br>
+              Please check your printer connection and try again.
+            </p>
+            <button class="btn btn-primary" onclick="checkDeviceConnections(); closePrinterInfoModal();">
+              <i data-lucide="refresh-cw" class="icon icon-sm"></i>
+              <span>Retry Connection</span>
+            </button>
+          </div>
+        `;
+      }
+
+      document.getElementById('printerInfoContent').innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function closePrinterInfoModal() {
+      document.getElementById('printerInfoModal').classList.remove('active');
+    }
+
+    async function testPrint() {
+      try {
+        const response = await fetch('/api/printer/test', { method: 'POST' });
+        if (response.ok) {
+          alert('Test print sent successfully!');
+        } else {
+          alert('Failed to send test print');
+        }
+      } catch (error) {
+        alert('Error sending test print: ' + error.message);
+      }
+    }
+
+    // Check device connections on page load and periodically
+    document.addEventListener('DOMContentLoaded', () => {
+      checkDeviceConnections();
+      // Check every 30 seconds
+      setInterval(checkDeviceConnections, 30000);
+    });
   </script>
 </body>
 </html>
