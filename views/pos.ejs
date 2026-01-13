@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Point of Sale - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+          <span class="sidebar-logo-text">Health Haven</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item" data-tooltip="Dashboard">
+          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Dashboard</span>
+        </a>
+        <a href="/inventory" class="nav-item" data-tooltip="Inventory">
+          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Inventory</span>
+        </a>
+        <a href="/pos" class="nav-item active" data-tooltip="Point of Sale">
+          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Point of Sale</span>
+        </a>
+        <a href="/transactions" class="nav-item" data-tooltip="Transactions">
+          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Transactions</span>
+        </a>
+        <a href="/alerts" class="nav-item" data-tooltip="Alerts">
+          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Alerts</span>
+          <% if (typeof alertCount !== 'undefined' && alertCount > 0) { %>
+            <span class="nav-item-badge"><%= alertCount %></span>
+          <% } %>
+        </a>
+        <a href="/reports" class="nav-item" data-tooltip="Reports">
+          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Reports</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <h1 class="page-title" style="margin: 0; font-size: 1.5rem;">Point of Sale</h1>
+          <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Process transactions and manage sales</p>
+        </div>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="page-container">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Scan Item</h3>
+              </div>
+              <div class="card-body">
+                <div class="flex gap-md" style="margin-bottom: 1.5rem;">
+                  <input type="text" id="barcodeInput" class="form-input" placeholder="Scan barcode or enter SKU..." autofocus style="flex: 1;">
+                  <button class="btn btn-primary" onclick="scanItem()">
+                    <i data-lucide="plus" class="icon icon-md"></i>
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Cart Items</h3>
+                <button class="btn btn-sm btn-danger" onclick="clearCart()">
+                  <i data-lucide="trash-2" class="icon icon-md"></i>
+                  <span>Clear</span>
+                </button>
+              </div>
+              <div class="card-body">
+                <div id="cartItems" style="min-height: 300px;">
+                  <div style="text-align: center; padding: 3rem; color: var(--neutral-500);">
+                    <div style="margin-bottom: 1rem;">
+                      <i data-lucide="shopping-cart" class="icon" style="width: 48px; height: 48px;"></i>
+                    </div>
+                    <div>Cart is empty</div>
+                    <div style="font-size: 0.875rem; margin-top: 0.5rem;">Scan items to add them to cart</div>
+                  </div>
+                </div>
+                <div id="cartSummary" style="display: none; border-top: 2px solid var(--neutral-200); padding-top: 1rem; margin-top: 1rem;">
+                  <div class="flex justify-between" style="margin-bottom: 0.5rem;"><span class="text-muted">Subtotal:</span><span id="subtotal" style="font-family: var(--font-mono);">₦0.00</span></div>
+                  <div class="flex justify-between" style="font-size: 1.25rem; font-weight: 700; color: var(--primary);"><span>Total:</span><span id="total" style="font-family: var(--font-mono);">₦0.00</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Transaction Details</h3>
+              </div>
+              <div class="card-body">
+                <form id="checkoutForm">
+                  <div class="form-group">
+                    <label class="form-label">Patient Name</label>
+                    <input type="text" name="patientName" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Patient ID</label>
+                    <input type="text" name="patientId" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Prescription Number</label>
+                    <input type="text" name="prescriptionNumber" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Payment Method</label>
+                    <select name="paymentMethod" class="form-select">
+                      <option value="cash">Cash</option>
+                      <option value="card">Card</option>
+                      <option value="insurance">Insurance</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <input type="text" name="notes" class="form-input">
+                  </div>
+                  <button type="button" class="btn btn-success" onclick="checkout()" style="width: 100%; font-size: 1.125rem; padding: 1rem;">
+                    <i data-lucide="check" class="icon icon-md"></i>
+                    <span>Complete Transaction</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let cart = [];
+    function toggleSidebar(){const s=document.getElementById('sidebar'),i=document.getElementById('toggleIcon');s.classList.toggle('collapsed');const iconName=s.classList.contains('collapsed')?'menu':'x';i.setAttribute('data-lucide',iconName);lucide.createIcons();localStorage.setItem('sidebarCollapsed',s.classList.contains('collapsed'));}
+    document.addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('sidebarCollapsed')==='true'){document.getElementById('sidebar').classList.add('collapsed');document.getElementById('toggleIcon').setAttribute('data-lucide','menu');}lucide.createIcons();});
+    async function logout(){await fetch('/api/auth/logout',{method:'POST'});window.location.href='/login';}
+    
+    async function scanItem(){const barcode=document.getElementById('barcodeInput').value.trim();if(!barcode)return;try{const r=await fetch('/api/pos/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({barcode})});if(r.ok){const d=await r.json();addToCart(d.data);document.getElementById('barcodeInput').value='';document.getElementById('barcodeInput').focus();}else{alert('Item not found');}}catch(e){alert('Error: '+e.message);}}
+    
+    function addToCart(item){const existing=cart.find(c=>c.inventoryItem===item._id);if(existing){existing.quantity++;}else{cart.push({inventoryItem:item._id,itemName:item.itemName,sku:item.sku,barcode:item.barcode,sellingPrice:item.sellingPrice,quantity:1,availableQuantity:item.quantity});}renderCart();}
+    
+    function renderCart(){const ci=document.getElementById('cartItems'),cs=document.getElementById('cartSummary');if(cart.length===0){ci.innerHTML='<div style="text-align:center;padding:3rem;color:var(--neutral-500);"><div style="margin-bottom:1rem;"><i data-lucide="shopping-cart" class="icon" style="width:48px;height:48px;"></i></div><div>Cart is empty</div><div style="font-size:0.875rem;margin-top:0.5rem;">Scan items to add them to cart</div></div>';cs.style.display='none';lucide.createIcons();return;}let html='',total=0;cart.forEach((item,i)=>{const sub=item.sellingPrice*item.quantity;total+=sub;html+=`<div style="display:flex;align-items:center;gap:1rem;padding:1rem;border-bottom:1px solid var(--neutral-200);"><div style="flex:1;"><strong>${item.itemName}</strong><div style="font-size:0.75rem;color:var(--neutral-600);">SKU: ${item.sku} | ₦${item.sellingPrice.toLocaleString('en-NG',{minimumFractionDigits:2})} each</div></div><div style="display:flex;align-items:center;gap:0.5rem;"><button class="btn btn-icon btn-sm btn-neutral" onclick="updateQuantity(${i},-1)">-</button><span style="min-width:30px;text-align:center;">${item.quantity}</span><button class="btn btn-icon btn-sm btn-neutral" onclick="updateQuantity(${i},1)">+</button></div><div style="min-width:100px;text-align:right;font-family:var(--font-mono);">₦${sub.toLocaleString('en-NG',{minimumFractionDigits:2})}</div><button class="btn btn-icon btn-danger" onclick="removeItem(${i})"><i data-lucide="x" class="icon icon-sm"></i></button></div>`;});ci.innerHTML=html;lucide.createIcons();document.getElementById('subtotal').textContent='₦'+total.toLocaleString('en-NG',{minimumFractionDigits:2});document.getElementById('total').textContent='₦'+total.toLocaleString('en-NG',{minimumFractionDigits:2});cs.style.display='block';}
+    
+    function updateQuantity(i,c){cart[i].quantity+=c;if(cart[i].quantity<=0){cart.splice(i,1);}renderCart();}
+    function removeItem(i){cart.splice(i,1);renderCart();}
+    function clearCart(){if(confirm('Clear all items from cart?')){cart=[];renderCart();}}
+    
+    async function checkout(){if(cart.length===0){alert('Cart is empty');return;}const lineItems=cart.map(item=>({inventoryItem:item.inventoryItem,quantity:item.quantity}));const txnData={lineItems,paymentMethod:document.querySelector('[name="paymentMethod"]').value,patientName:document.querySelector('[name="patientName"]').value,patientId:document.querySelector('[name="patientId"]').value,prescriptionNumber:document.querySelector('[name="prescriptionNumber"]').value,notes:document.querySelector('[name="notes"]').value};try{const r=await fetch('/api/transactions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(txnData)});if(r.ok){const d=await r.json();alert('Transaction completed!\nID: '+d.data.transactionId);if(confirm('Print receipt?')){window.open(`/api/transactions/${d.data._id}/print`,'_blank');}cart=[];renderCart();document.getElementById('checkoutForm').reset();}else{const e=await r.json();alert('Failed: '+(e.error||'Unknown error'));}}catch(e){alert('Error: '+e.message);}}
+    
+    document.getElementById('barcodeInput').addEventListener('keypress',(e)=>{if(e.key==='Enter'){scanItem();}});
+  </script>
+</body>
+</html>

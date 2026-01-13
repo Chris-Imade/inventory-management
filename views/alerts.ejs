@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerts - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+          <span class="sidebar-logo-text">Health Haven</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item" data-tooltip="Dashboard">
+          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Dashboard</span>
+        </a>
+        <a href="/inventory" class="nav-item" data-tooltip="Inventory">
+          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Inventory</span>
+        </a>
+        <a href="/pos" class="nav-item" data-tooltip="Point of Sale">
+          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Point of Sale</span>
+        </a>
+        <a href="/transactions" class="nav-item" data-tooltip="Transactions">
+          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Transactions</span>
+        </a>
+        <a href="/alerts" class="nav-item active" data-tooltip="Alerts">
+          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Alerts</span>
+          <% if (typeof alertCount !== 'undefined' && alertCount > 0) { %>
+            <span class="nav-item-badge"><%= alertCount %></span>
+          <% } %>
+        </a>
+        <a href="/reports" class="nav-item" data-tooltip="Reports">
+          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Reports</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <h1 class="page-title" style="margin: 0; font-size: 1.5rem;">Alerts & Notifications</h1>
+          <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Monitor low stock and expiry warnings</p>
+        </div>
+        <div class="flex items-center gap-md">
+          <button class="btn btn-primary" onclick="generateAlerts()">
+            <i data-lucide="refresh-cw" class="icon icon-md"></i>
+            <span>Generate Alerts</span>
+          </button>
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="page-container">
+        <div class="filters">
+          <div class="form-group" style="margin: 0;">
+            <select id="severityFilter" class="form-select">
+              <option value="">All Severities</option>
+              <option value="critical" <%= filters.severity === 'critical' ? 'selected' : '' %>>Critical</option>
+              <option value="warning" <%= filters.severity === 'warning' ? 'selected' : '' %>>Warning</option>
+              <option value="notice" <%= filters.severity === 'notice' ? 'selected' : '' %>>Notice</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="applyFilters()">
+            <i data-lucide="search" class="icon icon-md"></i>
+            <span>Filter</span>
+          </button>
+        </div>
+
+        <% if (alerts && alerts.length > 0) { %>
+          <% alerts.forEach(alert => { %>
+            <div class="card" style="border-left: 4px solid <%= alert.severity === 'critical' ? 'var(--danger)' : alert.severity === 'warning' ? 'var(--warning)' : 'var(--info)' %>;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span>
+                      <% if (alert.type === 'LOW_STOCK') { %>
+                        <i data-lucide="alert-triangle" class="icon icon-lg" style="color: var(--warning);"></i>
+                      <% } else if (alert.type === 'OUT_OF_STOCK') { %>
+                        <i data-lucide="alert-circle" class="icon icon-lg" style="color: var(--danger);"></i>
+                      <% } else if (alert.type.includes('EXPIRY')) { %>
+                        <i data-lucide="calendar-x" class="icon icon-lg" style="color: var(--danger);"></i>
+                      <% } %>
+                    </span>
+                    <strong style="font-size: 1.125rem;">
+                      <% if (alert.type === 'LOW_STOCK') { %>Low Stock Alert
+                      <% } else if (alert.type === 'OUT_OF_STOCK') { %>Out of Stock
+                      <% } else if (alert.type.includes('EXPIRY')) { %>Expiry Alert
+                      <% } %>
+                    </strong>
+                    <span class="badge badge-<%= alert.severity %>"><%= alert.severity.toUpperCase() %></span>
+                  </div>
+                  <div style="margin-bottom: 0.5rem; color: var(--neutral-700);"><%= alert.message %></div>
+                  <div class="text-muted" style="font-size: 0.875rem;">
+                    <% if (alert.inventoryItem) { %>
+                      Item: <%= alert.inventoryItem.itemName %> (SKU: <%= alert.inventoryItem.sku %>) | 
+                    <% } %>
+                    Created: <%= new Date(alert.createdAt).toLocaleString('en-NG') %>
+                  </div>
+                </div>
+                <div class="flex gap-sm">
+                  <% if (!alert.isRead) { %>
+                    <button class="btn btn-icon btn-primary tooltip" data-tooltip="Mark as Read" onclick="markAsRead('<%= alert._id %>')">
+                      <i data-lucide="check" class="icon icon-md"></i>
+                    </button>
+                  <% } %>
+                  <button class="btn btn-icon btn-neutral tooltip" data-tooltip="Dismiss" onclick="dismissAlert('<%= alert._id %>')">
+                    <i data-lucide="x" class="icon icon-md"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <div class="card" style="text-align: center; padding: 3rem;">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="check-circle" class="icon" style="width: 64px; height: 64px; color: var(--success);"></i>
+            </div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--neutral-900);">No Active Alerts</h3>
+            <p class="text-muted">All systems are running smoothly. Check back later for updates.</p>
+          </div>
+        <% } %>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar(){const s=document.getElementById('sidebar'),i=document.getElementById('toggleIcon');s.classList.toggle('collapsed');const iconName=s.classList.contains('collapsed')?'menu':'x';i.setAttribute('data-lucide',iconName);lucide.createIcons();localStorage.setItem('sidebarCollapsed',s.classList.contains('collapsed'));}
+    document.addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('sidebarCollapsed')==='true'){document.getElementById('sidebar').classList.add('collapsed');document.getElementById('toggleIcon').setAttribute('data-lucide','menu');}lucide.createIcons();});
+    async function logout(){await fetch('/api/auth/logout',{method:'POST'});window.location.href='/login';}
+    
+    // Loading state helper functions
+    function setButtonLoading(button, isLoading) {
+      if (isLoading) {
+        button.disabled = true;
+        button.classList.add('loading');
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner';
+        button.insertBefore(spinner, button.firstChild);
+      } else {
+        button.disabled = false;
+        button.classList.remove('loading');
+        const spinner = button.querySelector('.spinner');
+        if (spinner) spinner.remove();
+      }
+    }
+    
+    // Real-time filter functionality
+    function applyFiltersRealtime() {
+      const severity = document.getElementById('severityFilter').value;
+      const alertCards = document.querySelectorAll('.card[style*="border-left"]');
+      
+      alertCards.forEach(card => {
+        const badge = card.querySelector('.badge-critical, .badge-warning, .badge-notice');
+        const cardSeverity = badge ? badge.textContent.trim().toLowerCase() : '';
+        
+        if (!severity || cardSeverity === severity) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+    
+    function applyFilters() {
+      applyFiltersRealtime();
+    }
+    
+    // Attach real-time listener
+    document.addEventListener('DOMContentLoaded', () => {
+      const severityFilter = document.getElementById('severityFilter');
+      if (severityFilter) {
+        severityFilter.addEventListener('change', applyFiltersRealtime);
+      }
+    });
+    
+    async function generateAlerts(){const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch('/api/alerts/generate',{method:'POST'});if(r.ok){alert('Alerts generated successfully');window.location.reload();}else{setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    
+    async function markAsRead(id){const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/alerts/${id}/read`,{method:'PATCH'});if(r.ok){window.location.reload();}else{setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    
+    async function dismissAlert(id){if(!confirm('Dismiss this alert?'))return;const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/alerts/${id}/dismiss`,{method:'PATCH'});if(r.ok){window.location.reload();}else{setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+  </script>
+</body>
+</html>

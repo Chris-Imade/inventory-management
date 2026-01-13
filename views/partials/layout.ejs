@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+          <span class="sidebar-logo-text">Health Haven</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" data-tooltip="Toggle sidebar">
+          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item <%= page === 'dashboard' ? 'active' : '' %>" data-tooltip="Dashboard">
+          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Dashboard</span>
+        </a>
+
+        <a href="/inventory" class="nav-item <%= page === 'inventory' ? 'active' : '' %>" data-tooltip="Inventory">
+          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Inventory</span>
+        </a>
+
+        <a href="/pos" class="nav-item <%= page === 'pos' ? 'active' : '' %>" data-tooltip="Point of Sale">
+          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Point of Sale</span>
+        </a>
+
+        <a href="/transactions" class="nav-item <%= page === 'transactions' ? 'active' : '' %>" data-tooltip="Transactions">
+          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Transactions</span>
+        </a>
+
+        <a href="/alerts" class="nav-item <%= page === 'alerts' ? 'active' : '' %>" data-tooltip="Alerts">
+          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Alerts</span>
+          <% if (typeof alertCount !== 'undefined' && alertCount > 0) { %>
+            <span class="nav-item-badge"><%= alertCount %></span>
+          <% } %>
+        </a>
+
+        <a href="/reports" class="nav-item <%= page === 'reports' ? 'active' : '' %>" data-tooltip="Reports">
+          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Reports</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <h1 class="page-title" style="margin: 0; font-size: 1.5rem;"><%= title %></h1>
+          <% if (typeof subtitle !== 'undefined') { %>
+            <p class="text-muted" style="margin: 0; font-size: 0.875rem;"><%= subtitle %></p>
+          <% } %>
+        </div>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="page-container">
+        <%- body %>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const icon = document.getElementById('toggleIcon');
+      sidebar.classList.toggle('collapsed');
+      const iconName = sidebar.classList.contains('collapsed') ? 'menu' : 'x';
+      icon.setAttribute('data-lucide', iconName);
+      lucide.createIcons();
+      localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    // Restore sidebar state
+    document.addEventListener('DOMContentLoaded', () => {
+      const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (collapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('toggleIcon').setAttribute('data-lucide', 'menu');
+        lucide.createIcons();
+      }
+      
+      // Initialize Lucide icons
+      lucide.createIcons();
+    });
+
+    // Logout function
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
+
+    // Currency formatting helper
+    function formatCurrency(amount) {
+      return '₦' + parseFloat(amount).toLocaleString('en-NG', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+    }
+
+    // Tooltip functionality for collapsed sidebar
+    document.addEventListener('DOMContentLoaded', () => {
+      const sidebar = document.getElementById('sidebar');
+      const navItems = document.querySelectorAll('.nav-item');
+      
+      navItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+          if (sidebar.classList.contains('collapsed')) {
+            const text = this.querySelector('.nav-item-text')?.textContent;
+            if (text) {
+              this.setAttribute('data-tooltip', text);
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,17 +1,25 @@
 {
-  "name": "nodejs-inventory-application",
-  "version": "1.0.0",
-  "description": "Inventory management app based on NodeJs, Express, PostgresSQL",
-  "main": "index.js",
+  "name": "medical-inventory-management",
+  "version": "2.0.0",
+  "description": "Medical Inventory & Records Management System with Barcode Support, POS, and Thermal Printing",
+  "main": "app.js",
   "scripts": {
-    "start":"node app.js",
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "seed": "node src/database/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-      },
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/1Amal/NodeJs-Inventory-Application.git"
   },
-  "keywords": [],
+  "keywords": [
+    "medical-inventory",
+    "barcode",
+    "pos",
+    "thermal-printing",
+    "inventory-management"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -20,9 +28,25 @@
   },
   "homepage": "https://github.com/1Amal/NodeJs-Inventory-Application#readme",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "bwip-js": "^4.5.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
-    "pg": "^8.13.1"
+    "express-session": "^1.18.1",
+    "express-validator": "^7.2.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.4",
+    "morgan": "^1.10.0",
+    "node-thermal-printer": "^4.4.6",
+    "pdfkit": "^0.15.0",
+    "qrcode": "^1.5.4",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }

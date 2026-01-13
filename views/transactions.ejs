@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+          <span class="sidebar-logo-text">Health Haven</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item" data-tooltip="Dashboard">
+          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Dashboard</span>
+        </a>
+        <a href="/inventory" class="nav-item" data-tooltip="Inventory">
+          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Inventory</span>
+        </a>
+        <a href="/pos" class="nav-item" data-tooltip="Point of Sale">
+          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Point of Sale</span>
+        </a>
+        <a href="/transactions" class="nav-item active" data-tooltip="Transactions">
+          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Transactions</span>
+        </a>
+        <a href="/alerts" class="nav-item" data-tooltip="Alerts">
+          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Alerts</span>
+          <% if (typeof alertCount !== 'undefined' && alertCount > 0) { %>
+            <span class="nav-item-badge"><%= alertCount %></span>
+          <% } %>
+        </a>
+        <a href="/reports" class="nav-item" data-tooltip="Reports">
+          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Reports</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <h1 class="page-title" style="margin: 0; font-size: 1.5rem;">Transaction History</h1>
+          <p class="text-muted" style="margin: 0; font-size: 0.875rem;">View and manage sales transactions</p>
+        </div>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="page-container">
+        <div class="filters">
+          <div class="form-group" style="margin: 0; flex: 1; min-width: 250px;">
+            <input type="text" id="searchInput" class="form-input" placeholder="Search by transaction ID, patient name, or prescription..." value="<%= filters.search || '' %>">
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <select id="statusFilter" class="form-select">
+              <option value="">All Statuses</option>
+              <option value="COMPLETED" <%= filters.status === 'COMPLETED' ? 'selected' : '' %>>Completed</option>
+              <option value="CANCELLED" <%= filters.status === 'CANCELLED' ? 'selected' : '' %>>Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <input type="date" id="startDate" class="form-input" value="<%= filters.startDate || '' %>" placeholder="Start Date">
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <input type="date" id="endDate" class="form-input" value="<%= filters.endDate || '' %>" placeholder="End Date">
+          </div>
+          <button class="btn btn-primary" onclick="applyFilters()">
+            <i data-lucide="search" class="icon icon-md"></i>
+            <span>Filter</span>
+          </button>
+          <button class="btn btn-neutral" onclick="clearFilters()">
+            <i data-lucide="x" class="icon icon-md"></i>
+            <span>Clear</span>
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th style="text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (transactions && transactions.length > 0) { %>
+                <% transactions.forEach(txn => { %>
+                  <tr>
+                    <td>
+                      <code style="font-size: 0.8rem;"><%= txn.transactionId %></code>
+                      <% if (txn.prescriptionNumber) { %>
+                        <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;">Rx: <%= txn.prescriptionNumber %></div>
+                      <% } %>
+                    </td>
+                    <td><%= new Date(txn.createdAt).toLocaleString('en-NG') %></td>
+                    <td>
+                      <%= txn.patientName || 'N/A' %>
+                      <% if (txn.patientId) { %>
+                        <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;">ID: <%= txn.patientId %></div>
+                      <% } %>
+                    </td>
+                    <td><%= txn.lineItems.length %> item(s)</td>
+                    <td style="font-family: var(--font-mono);">₦<%= txn.totalAmount.toLocaleString('en-NG', {minimumFractionDigits: 2}) %></td>
+                    <td><span class="badge badge-neutral"><%= txn.paymentMethod.toUpperCase() %></span></td>
+                    <td>
+                      <% if (txn.status === 'COMPLETED') { %>
+                        <span class="badge badge-success">Completed</span>
+                      <% } else { %>
+                        <span class="badge badge-danger">Cancelled</span>
+                      <% } %>
+                      <% if (txn.status === 'CANCELLED' && txn.cancellationReason) { %>
+                        <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.25rem;"><%= txn.cancellationReason.substring(0, 30) %>...</div>
+                      <% } %>
+                    </td>
+                    <td style="text-align: center;">
+                      <div class="flex gap-sm" style="justify-content: center;">
+                        <button class="btn btn-icon btn-neutral tooltip" data-tooltip="View Details" onclick="viewDetails('<%= txn._id %>')">
+                          <i data-lucide="eye" class="icon icon-md"></i>
+                        </button>
+                        <% if (txn.status === 'COMPLETED') { %>
+                          <button class="btn btn-icon btn-danger tooltip" data-tooltip="Cancel" onclick="cancelTransaction('<%= txn._id %>')">
+                            <i data-lucide="x" class="icon icon-md"></i>
+                          </button>
+                        <% } %>
+                        <button class="btn btn-icon btn-secondary tooltip" data-tooltip="Print Receipt" onclick="printReceipt('<%= txn._id %>')">
+                          <i data-lucide="printer" class="icon icon-md"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 3rem; color: var(--neutral-500);">
+                    <div style="margin-bottom: 1rem;">
+                      <i data-lucide="credit-card" class="icon" style="width: 48px; height: 48px;"></i>
+                    </div>
+                    <div>No transactions found</div>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar(){const s=document.getElementById('sidebar'),i=document.getElementById('toggleIcon');s.classList.toggle('collapsed');const iconName=s.classList.contains('collapsed')?'menu':'x';i.setAttribute('data-lucide',iconName);lucide.createIcons();localStorage.setItem('sidebarCollapsed',s.classList.contains('collapsed'));}
+    document.addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('sidebarCollapsed')==='true'){document.getElementById('sidebar').classList.add('collapsed');document.getElementById('toggleIcon').setAttribute('data-lucide','menu');}lucide.createIcons();});
+    async function logout(){await fetch('/api/auth/logout',{method:'POST'});window.location.href='/login';}
+    
+    // Loading state helper functions
+    function setButtonLoading(button, isLoading) {
+      if (isLoading) {
+        button.disabled = true;
+        button.classList.add('loading');
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner';
+        button.insertBefore(spinner, button.firstChild);
+      } else {
+        button.disabled = false;
+        button.classList.remove('loading');
+        const spinner = button.querySelector('.spinner');
+        if (spinner) spinner.remove();
+      }
+    }
+    
+    // Real-time filter and search functionality
+    let filterTimeout;
+    
+    function applyFiltersRealtime() {
+      clearTimeout(filterTimeout);
+      filterTimeout = setTimeout(() => {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const rows = document.querySelectorAll('.table tbody tr');
+        
+        rows.forEach(row => {
+          if (row.cells.length === 1) return; // Skip empty state row
+          
+          const txnId = row.cells[0].textContent.toLowerCase();
+          const dateText = row.cells[1].textContent;
+          const patient = row.cells[2].textContent.toLowerCase();
+          const statusBadge = row.cells[6].querySelector('.badge');
+          const txnStatus = statusBadge ? statusBadge.textContent.trim().toUpperCase() : '';
+          
+          let matchesSearch = true;
+          let matchesStatus = true;
+          let matchesDate = true;
+          
+          // Search filter
+          if (search) {
+            matchesSearch = txnId.includes(search) || patient.includes(search);
+          }
+          
+          // Status filter
+          if (status) {
+            matchesStatus = txnStatus === status;
+          }
+          
+          // Date range filter
+          if (startDate || endDate) {
+            const rowDate = new Date(dateText);
+            if (startDate) {
+              const start = new Date(startDate);
+              matchesDate = matchesDate && rowDate >= start;
+            }
+            if (endDate) {
+              const end = new Date(endDate);
+              end.setHours(23, 59, 59, 999);
+              matchesDate = matchesDate && rowDate <= end;
+            }
+          }
+          
+          // Show/hide row based on all filters
+          if (matchesSearch && matchesStatus && matchesDate) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      }, 300); // Debounce for 300ms
+    }
+    
+    function applyFilters() {
+      applyFiltersRealtime();
+    }
+    
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('statusFilter').value = '';
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
+      applyFiltersRealtime();
+    }
+    
+    // Attach real-time listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('searchInput').addEventListener('input', applyFiltersRealtime);
+      document.getElementById('statusFilter').addEventListener('change', applyFiltersRealtime);
+      document.getElementById('startDate').addEventListener('change', applyFiltersRealtime);
+      document.getElementById('endDate').addEventListener('change', applyFiltersRealtime);
+    });
+    
+    async function viewDetails(id){try{const r=await fetch(`/api/transactions/${id}`);if(!r.ok){alert('Failed to load transaction details');return;}const result=await r.json();const txn=result.data;let details=`Transaction ID: ${txn.transactionId}\n`;details+=`Date: ${new Date(txn.createdAt).toLocaleString('en-NG')}\n`;details+=`Status: ${txn.status}\n\n`;if(txn.patientName)details+=`Patient: ${txn.patientName}\n`;if(txn.patientId)details+=`Patient ID: ${txn.patientId}\n`;if(txn.prescriptionNumber)details+=`Prescription: ${txn.prescriptionNumber}\n`;details+=`\nItems:\n`;txn.lineItems.forEach((item,i)=>{details+=`${i+1}. ${item.itemSnapshot.itemName} (${item.itemSnapshot.sku})\n`;details+=`   Qty: ${item.quantity} @ ₦${item.unitPrice.toLocaleString('en-NG',{minimumFractionDigits:2})} = ₦${item.subtotal.toLocaleString('en-NG',{minimumFractionDigits:2})}\n`;});details+=`\nTotal: ₦${txn.totalAmount.toLocaleString('en-NG',{minimumFractionDigits:2})}\n`;details+=`Payment: ${txn.paymentMethod.toUpperCase()}\n`;if(txn.notes)details+=`Notes: ${txn.notes}\n`;if(txn.status==='CANCELLED'){details+=`\nCancelled: ${new Date(txn.cancelledAt).toLocaleString('en-NG')}\n`;details+=`Reason: ${txn.cancellationReason}\n`;}alert(details);}catch(e){alert('Error: '+e.message);}}
+    
+    async function cancelTransaction(id){const reason=prompt('Enter cancellation reason:');if(!reason)return;const btn=event.target.closest('button');setButtonLoading(btn,true);try{const r=await fetch(`/api/transactions/${id}/cancel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cancellationReason:reason})});if(r.ok){alert('Transaction cancelled successfully');window.location.reload();}else{const e=await r.json();alert('Failed: '+(e.error||'Unknown error'));setButtonLoading(btn,false);}}catch(e){alert('Error: '+e.message);setButtonLoading(btn,false);}}
+    
+    function printReceipt(id){window.open(`/api/transactions/${id}/print`,'_blank');}
+  </script>
+</body>
+</html>

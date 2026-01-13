@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+          <span class="sidebar-logo-text">Health Haven</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" data-tooltip="Toggle sidebar">
+          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item active" data-tooltip="Dashboard">
+          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Dashboard</span>
+        </a>
+
+        <a href="/inventory" class="nav-item" data-tooltip="Inventory">
+          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Inventory</span>
+        </a>
+
+        <a href="/pos" class="nav-item" data-tooltip="Point of Sale">
+          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Point of Sale</span>
+        </a>
+
+        <a href="/transactions" class="nav-item" data-tooltip="Transactions">
+          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Transactions</span>
+        </a>
+
+        <a href="/alerts" class="nav-item" data-tooltip="Alerts">
+          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Alerts</span>
+          <% if (typeof alertStats !== 'undefined' && alertStats.total > 0) { %>
+            <span class="nav-item-badge"><%= alertStats.total %></span>
+          <% } %>
+        </a>
+
+        <a href="/reports" class="nav-item" data-tooltip="Reports">
+          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Reports</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <h1 class="page-title" style="margin: 0; font-size: 1.5rem;">Dashboard</h1>
+          <p class="text-muted" style="margin: 0; font-size: 0.875rem;">System overview and key metrics</p>
+        </div>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;"><i data-lucide="user" class="icon icon-sm"></i><%= user %></span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="page-container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="package" class="icon icon-xl" style="color: var(--primary);"></i></div>
+            <div class="stat-label">Total Items</div>
+            <div class="stat-value"><%= stats.totalItems %></div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="alert-triangle" class="icon icon-xl" style="color: var(--warning);"></i></div>
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-value"><%= stats.lowStockItems %></div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="calendar-x" class="icon icon-xl" style="color: var(--danger);"></i></div>
+            <div class="stat-label">Expired Items</div>
+            <div class="stat-value"><%= stats.expiredItems %></div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon"><i data-lucide="dollar-sign" class="icon icon-xl" style="color: var(--success);"></i></div>
+            <div class="stat-label">Total Value</div>
+            <div class="stat-value">₦<%= stats.totalValue.toLocaleString('en-NG', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Quick Actions</h3>
+          </div>
+          <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <a href="/inventory" class="btn btn-primary btn-lg" style="text-decoration: none;">
+                <i data-lucide="package" class="icon icon-md"></i>
+                <span>Manage Inventory</span>
+              </a>
+              <a href="/pos" class="btn btn-secondary btn-lg" style="text-decoration: none;">
+                <i data-lucide="shopping-cart" class="icon icon-md"></i>
+                <span>New Transaction</span>
+              </a>
+              <a href="/reports" class="btn btn-neutral btn-lg" style="text-decoration: none;">
+                <i data-lucide="bar-chart-3" class="icon icon-md"></i>
+                <span>View Reports</span>
+              </a>
+              <a href="/alerts" class="btn btn-neutral btn-lg" style="text-decoration: none;">
+                <i data-lucide="bell" class="icon icon-md"></i>
+                <span>Check Alerts</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          <!-- Low Stock Items -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Low Stock Items</h3>
+              <a href="/inventory?lowStock=true" class="btn btn-sm btn-neutral">View All</a>
+            </div>
+            <div class="card-body">
+              <% if (stats.lowStockItems > 0) { %>
+                <p class="text-muted">You have <strong><%= stats.lowStockItems %></strong> items that need restocking.</p>
+                <a href="/inventory?lowStock=true" class="btn btn-primary btn-sm" style="margin-top: 1rem;">
+                  Restock Now
+                </a>
+              <% } else { %>
+                <p class="text-muted">All items are adequately stocked.</p>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Expiring Soon -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Expiring Soon</h3>
+              <a href="/inventory?expired=true" class="btn btn-sm btn-neutral">View All</a>
+            </div>
+            <div class="card-body">
+              <% if (stats.expiredItems > 0) { %>
+                <p class="text-muted"><strong><%= stats.expiredItems %></strong> items are expired or expiring soon.</p>
+                <a href="/inventory?expired=true" class="btn btn-danger btn-sm" style="margin-top: 1rem;">
+                  Review Items
+                </a>
+              <% } else { %>
+                <p class="text-muted">No items expiring in the next 90 days.</p>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Active Alerts -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Active Alerts</h3>
+              <a href="/alerts" class="btn btn-sm btn-neutral">View All</a>
+            </div>
+            <div class="card-body">
+              <% if (typeof alertStats !== 'undefined' && alertStats.total > 0) { %>
+                <p class="text-muted">You have <strong><%= alertStats.total %></strong> active alerts requiring attention.</p>
+                <a href="/alerts" class="btn btn-warning btn-sm" style="margin-top: 1rem;">
+                  Review Alerts
+                </a>
+              <% } else { %>
+                <p class="text-muted">No active alerts at this time.</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar toggle functionality
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const icon = document.getElementById('toggleIcon');
+      sidebar.classList.toggle('collapsed');
+      const iconName = sidebar.classList.contains('collapsed') ? 'menu' : 'x';
+      icon.setAttribute('data-lucide', iconName);
+      lucide.createIcons();
+      localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+    }
+
+    // Restore sidebar state
+    document.addEventListener('DOMContentLoaded', () => {
+      const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      if (collapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('toggleIcon').setAttribute('data-lucide', 'menu');
+        lucide.createIcons();
+      }
+      
+      // Initialize Lucide icons
+      lucide.createIcons();
+    });
+
+    // Logout function
+    async function logout() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
+
+    // Currency formatting helper
+    function formatCurrency(amount) {
+      return '₦' + parseFloat(amount).toLocaleString('en-NG', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+    }
+  </script>
+</body>
+</html>

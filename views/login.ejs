@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--neutral-50);
+    }
+    .login-card {
+      background: white;
+      border: 1px solid var(--neutral-200);
+      border-radius: 0.75rem;
+      padding: 3rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--neutral-900);
+      margin-bottom: 0.5rem;
+    }
+    .login-subtitle {
+      font-size: 0.875rem;
+      color: var(--neutral-600);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">
+          <i data-lucide="activity" class="icon" style="width: 64px; height: 64px; color: var(--primary);"></i>
+        </div>
+        <h1 class="login-title">Health Haven</h1>
+        <p class="login-subtitle">Sign in to continue</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-input" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-input" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          <i data-lucide="log-in" class="icon icon-md"></i>
+          <span>Sign In</span>
+        </button>
+      </form>
+
+      <div id="errorMessage" class="alert alert-danger" style="margin-top: 1rem; display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      const errorDiv = document.getElementById('errorMessage');
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          window.location.href = '/dashboard';
+        } else {
+          const error = await response.json();
+          errorDiv.textContent = error.error || 'Login failed. Please check your credentials.';
+          errorDiv.style.display = 'flex';
+        }
+      } catch (error) {
+        errorDiv.textContent = 'Connection error. Please try again.';
+        errorDiv.style.display = 'flex';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

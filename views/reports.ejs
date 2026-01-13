@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+          <span class="sidebar-logo-text">Health Haven</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-item" data-tooltip="Dashboard">
+          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Dashboard</span>
+        </a>
+        <a href="/inventory" class="nav-item" data-tooltip="Inventory">
+          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Inventory</span>
+        </a>
+        <a href="/pos" class="nav-item" data-tooltip="Point of Sale">
+          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Point of Sale</span>
+        </a>
+        <a href="/transactions" class="nav-item" data-tooltip="Transactions">
+          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Transactions</span>
+        </a>
+        <a href="/alerts" class="nav-item" data-tooltip="Alerts">
+          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Alerts</span>
+          <% if (typeof alertCount !== 'undefined' && alertCount > 0) { %>
+            <span class="nav-item-badge"><%= alertCount %></span>
+          <% } %>
+        </a>
+        <a href="/reports" class="nav-item active" data-tooltip="Reports">
+          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Reports</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+          <span class="nav-item-text">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div>
+          <h1 class="page-title" style="margin: 0; font-size: 1.5rem;">Reports & Analytics</h1>
+          <p class="text-muted" style="margin: 0; font-size: 0.875rem;">Generate and export system reports</p>
+        </div>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="page-container">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+          <div class="card">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="package" class="icon" style="width: 40px; height: 40px; color: var(--primary);"></i>
+            </div>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Inventory Report</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.875rem;">Complete inventory listing with stock levels, valuations, and categories</p>
+            <div class="form-group">
+              <label class="form-label">Category Filter</label>
+              <select id="invCategory" class="form-select">
+                <option value="">All Categories</option>
+                <option value="medication">Medication</option>
+                <option value="equipment">Equipment</option>
+                <option value="consumables">Consumables</option>
+                <option value="surgical">Surgical</option>
+                <option value="diagnostic">Diagnostic</option>
+              </select>
+            </div>
+            <div class="flex gap-sm">
+              <button class="btn btn-primary" onclick="generateReport('inventory','pdf')" style="flex: 1;">
+                <i data-lucide="file-text" class="icon icon-md"></i>
+                <span>PDF</span>
+              </button>
+              <button class="btn btn-secondary" onclick="generateReport('inventory','csv')" style="flex: 1;">
+                <i data-lucide="bar-chart" class="icon icon-md"></i>
+                <span>CSV</span>
+              </button>
+              <button class="btn btn-neutral" onclick="generateReport('inventory','json')" style="flex: 1;">
+                <i data-lucide="clipboard" class="icon icon-md"></i>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="dollar-sign" class="icon" style="width: 40px; height: 40px; color: var(--success);"></i>
+            </div>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Transaction Report</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.875rem;">Sales history, revenue analysis, and payment breakdowns</p>
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input type="date" id="txnStartDate" class="form-input">
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date</label>
+              <input type="date" id="txnEndDate" class="form-input">
+            </div>
+            <div class="flex gap-sm">
+              <button class="btn btn-primary" onclick="generateReport('transactions','pdf')" style="flex: 1;">
+                <i data-lucide="file-text" class="icon icon-md"></i>
+                <span>PDF</span>
+              </button>
+              <button class="btn btn-secondary" onclick="generateReport('transactions','csv')" style="flex: 1;">
+                <i data-lucide="bar-chart" class="icon icon-md"></i>
+                <span>CSV</span>
+              </button>
+              <button class="btn btn-neutral" onclick="generateReport('transactions','json')" style="flex: 1;">
+                <i data-lucide="clipboard" class="icon icon-md"></i>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="alert-triangle" class="icon" style="width: 40px; height: 40px; color: var(--warning);"></i>
+            </div>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Low Stock Report</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.875rem;">Items below minimum stock levels that need restocking</p>
+            <div class="flex gap-sm" style="margin-top: auto;">
+              <button class="btn btn-primary" onclick="generateReport('low-stock','pdf')" style="flex: 1;">
+                <i data-lucide="file-text" class="icon icon-md"></i>
+                <span>PDF</span>
+              </button>
+              <button class="btn btn-neutral" onclick="generateReport('low-stock','json')" style="flex: 1;">
+                <i data-lucide="clipboard" class="icon icon-md"></i>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="calendar-x" class="icon" style="width: 40px; height: 40px; color: var(--danger);"></i>
+            </div>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Expiry Report</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.875rem;">Items expiring soon or already expired</p>
+            <div class="form-group">
+              <label class="form-label">Days Ahead</label>
+              <select id="expiryDays" class="form-select">
+                <option value="30">30 Days</option>
+                <option value="60">60 Days</option>
+                <option value="90" selected>90 Days</option>
+                <option value="180">180 Days</option>
+              </select>
+            </div>
+            <div class="flex gap-sm">
+              <button class="btn btn-primary" onclick="generateReport('expiry','pdf')" style="flex: 1;">
+                <i data-lucide="file-text" class="icon icon-md"></i>
+                <span>PDF</span>
+              </button>
+              <button class="btn btn-neutral" onclick="generateReport('expiry','json')" style="flex: 1;">
+                <i data-lucide="clipboard" class="icon icon-md"></i>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="bar-chart-3" class="icon" style="width: 40px; height: 40px; color: var(--info);"></i>
+            </div>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Daily Summary</h3>
+            <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.875rem;">End-of-day transaction summary for printing</p>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" id="summaryDate" class="form-input" value="<%= new Date().toISOString().split('T')[0] %>">
+            </div>
+            <button class="btn btn-primary" onclick="printDailySummary()" style="width: 100%;">
+              <i data-lucide="printer" class="icon icon-md"></i>
+              <span>Print Summary</span>
+            </button>
+          </div>
+
+          <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 3rem;">
+            <div style="margin-bottom: 1rem;">
+              <i data-lucide="search" class="icon" style="width: 48px; height: 48px; color: var(--neutral-600);"></i>
+            </div>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">Custom Report</h3>
+            <p class="text-muted" style="font-size: 0.875rem;">Build custom reports with specific parameters</p>
+            <p class="text-muted" style="font-style: italic; margin-top: 1rem;">Coming soon...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar(){const s=document.getElementById('sidebar'),i=document.getElementById('toggleIcon');s.classList.toggle('collapsed');const iconName=s.classList.contains('collapsed')?'menu':'x';i.setAttribute('data-lucide',iconName);lucide.createIcons();localStorage.setItem('sidebarCollapsed',s.classList.contains('collapsed'));}
+    document.addEventListener('DOMContentLoaded',()=>{if(localStorage.getItem('sidebarCollapsed')==='true'){document.getElementById('sidebar').classList.add('collapsed');document.getElementById('toggleIcon').setAttribute('data-lucide','menu');}lucide.createIcons();});
+    async function logout(){await fetch('/api/auth/logout',{method:'POST'});window.location.href='/login';}
+    
+    async function generateReport(type,format){let url=`/api/reports/${type}?format=${format}`;if(type==='inventory'){const category=document.getElementById('invCategory').value;if(category)url+=`&category=${category}`;}if(type==='transactions'){const startDate=document.getElementById('txnStartDate').value,endDate=document.getElementById('txnEndDate').value;if(startDate)url+=`&startDate=${startDate}`;if(endDate)url+=`&endDate=${endDate}`;}if(type==='expiry'){const days=document.getElementById('expiryDays').value;url+=`&days=${days}`;}try{const response=await fetch(url);if(!response.ok){alert('Failed to generate report');return;}const blob=await response.blob();const downloadUrl=window.URL.createObjectURL(blob);const a=document.createElement('a');a.href=downloadUrl;const filename=`${type}-report-${new Date().toISOString().split('T')[0]}.${format}`;a.download=filename;document.body.appendChild(a);a.click();window.URL.revokeObjectURL(downloadUrl);document.body.removeChild(a);}catch(error){alert('Error generating report: '+error.message);}}
+    
+    async function printDailySummary(){const date=document.getElementById('summaryDate').value,url=`/api/transactions/print-summary?date=${date}`;try{const r=await fetch(url,{method:'POST'}),d=await r.json();if(d.success){alert('Summary printed successfully!');if(d.summary){const win=window.open('','_blank');win.document.write('<pre>'+d.summary+'</pre>');}}else{alert('Failed to print summary');}}catch(e){alert('Error: '+e.message);}}
+  </script>
+</body>
+</html>
