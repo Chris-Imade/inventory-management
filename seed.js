@@ -274,18 +274,18 @@ async function seedAlerts(inventoryItems) {
 async function seedUsers() {
   console.log('Seeding Users...');
   
-  const users = [
-    { 
-      username: process.env.ADMIN_USERNAME || 'admin', 
-      password: process.env.ADMIN_PASSWORD || 'Admin123!', 
-      isActive: true 
-    }
-  ];
-  
   await User.deleteMany({});
-  const created = await User.insertMany(users);
-  console.log(`✓ Created ${created.length} users (Admin: ${users[0].username})`);
-  return created;
+  
+  const adminUser = new User({
+    username: process.env.ADMIN_USERNAME || 'admin', 
+    password: process.env.ADMIN_PASSWORD || 'Admin123!', 
+    isActive: true 
+  });
+  
+  await adminUser.save();
+  
+  console.log(`✓ Created 1 user (Admin: ${adminUser.username})`);
+  return [adminUser];
 }
 
 // Main seed function
