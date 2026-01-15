@@ -5,56 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reports - Health Haven</title>
   <link rel="stylesheet" href="/css/styles.css">
-  <script src="/js/lucide.min.js"></script>
+  <script src="/js/lucide.js?v=1"></script>
 </head>
 <body>
   <div class="app-container">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
-          <span class="sidebar-logo-text">Health Haven</span>
-        </div>
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
-          <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
-        </button>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/dashboard" class="nav-item" data-tooltip="Dashboard">
-          <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Dashboard</span>
-        </a>
-        <a href="/inventory" class="nav-item" data-tooltip="Inventory">
-          <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Inventory</span>
-        </a>
-        <a href="/pos" class="nav-item" data-tooltip="Point of Sale">
-          <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Point of Sale</span>
-        </a>
-        <a href="/transactions" class="nav-item" data-tooltip="Transactions">
-          <i data-lucide="credit-card" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Transactions</span>
-        </a>
-        <a href="/alerts" class="nav-item" data-tooltip="Alerts">
-          <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Alerts</span>
-          <% if (typeof alertCount !== 'undefined' && alertCount > 0) { %>
-            <span class="nav-item-badge"><%= alertCount %></span>
-          <% } %>
-        </a>
-        <a href="/reports" class="nav-item active" data-tooltip="Reports">
-          <i data-lucide="bar-chart-3" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Reports</span>
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
-          <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
-          <span class="nav-item-text">Logout</span>
-        </button>
-      </div>
-    </aside>
+    <%- include('partials/sidebar', { activePage: 'reports' }) %>
 
     <main class="main-content">
       <div class="top-bar">

@@ -94,6 +94,86 @@ const renderDashboard = asyncHandler(async (req, res) => {
   });
 });
 
+const renderBillingCards = asyncHandler(async (req, res) => {
+  const { billId } = req.query;
+  let bill = null;
+  
+  if (billId) {
+    const billingService = require('../services/billingService');
+    bill = await billingService.getBillById(billId);
+  }
+  
+  res.render('billing/cards', {
+    appName: config.appName,
+    user: req.session.username,
+    bill,
+  });
+});
+
+const renderBillingConsultation = asyncHandler(async (req, res) => {
+  const { billId } = req.query;
+  let bill = null;
+  
+  if (billId) {
+    const billingService = require('../services/billingService');
+    bill = await billingService.getBillById(billId);
+  }
+  
+  res.render('billing/consultation', {
+    appName: config.appName,
+    user: req.session.username,
+    bill,
+  });
+});
+
+const renderBillingDrugs = asyncHandler(async (req, res) => {
+  const { billId } = req.query;
+  let bill = null;
+  
+  if (billId) {
+    const billingService = require('../services/billingService');
+    bill = await billingService.getBillById(billId);
+  }
+  
+  res.render('billing/drugs', {
+    appName: config.appName,
+    user: req.session.username,
+    bill,
+  });
+});
+
+const renderBillingProcedure = asyncHandler(async (req, res) => {
+  const { billId } = req.query;
+  let bill = null;
+  
+  if (billId) {
+    const billingService = require('../services/billingService');
+    bill = await billingService.getBillById(billId);
+  }
+  
+  res.render('billing/procedure', {
+    appName: config.appName,
+    user: req.session.username,
+    bill,
+  });
+});
+
+const renderBillingAdmission = asyncHandler(async (req, res) => {
+  const { billId } = req.query;
+  let bill = null;
+  
+  if (billId) {
+    const billingService = require('../services/billingService');
+    bill = await billingService.getBillById(billId);
+  }
+  
+  res.render('billing/admission', {
+    appName: config.appName,
+    user: req.session.username,
+    bill,
+  });
+});
+
 module.exports = {
   renderInventory,
   renderPOS,
@@ -101,4 +181,9 @@ module.exports = {
   renderAlerts,
   renderReports,
   renderDashboard,
+  renderBillingCards,
+  renderBillingConsultation,
+  renderBillingDrugs,
+  renderBillingProcedure,
+  renderBillingAdmission,
 };

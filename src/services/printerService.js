@@ -84,28 +84,22 @@ class PrinterService {
       this.printer.clear();
       
       this.printer.alignCenter();
-      this.printer.setTextSize(1, 1);
+      this.printer.setTextNormal();
       this.printer.bold(true);
       this.printer.println(clinic.name || 'Medical Clinic');
       this.printer.bold(false);
-      this.printer.setTextNormal();
       
-      if (clinic.address) {
-        this.printer.println(clinic.address);
-      }
       if (clinic.phone) {
         this.printer.println(`Tel: ${clinic.phone}`);
-      }
-      if (clinic.email) {
-        this.printer.println(`Email: ${clinic.email}`);
       }
       
       this.printer.drawLine();
       
       this.printer.alignLeft();
-      this.printer.println(`Transaction ID: ${transaction.transactionId}`);
-      this.printer.println(`Date: ${new Date(transaction.createdAt).toLocaleString()}`);
-      this.printer.println(`Status: ${transaction.status}`);
+      this.printer.setTextSize(0, 0);
+      this.printer.println(`TXN: ${transaction.transactionId}`);
+      this.printer.println(`Date: ${new Date(transaction.createdAt).toLocaleDateString()} ${new Date(transaction.createdAt).toLocaleTimeString()}`);
+      this.printer.setTextNormal();
       
       if (transaction.patientName) {
         this.printer.println(`Patient: ${transaction.patientName}`);
@@ -148,12 +142,11 @@ class PrinterService {
       this.printer.drawLine();
       
       this.printer.bold(true);
-      this.printer.setTextSize(1, 1);
+      this.printer.setTextNormal();
       this.printer.tableCustom([
         { text: 'TOTAL:', align: 'LEFT', width: 0.65 },
-        { text: `$${transaction.totalAmount.toFixed(2)}`, align: 'RIGHT', width: 0.35 },
+        { text: `₦${transaction.totalAmount.toFixed(2)}`, align: 'RIGHT', width: 0.35 },
       ]);
-      this.printer.setTextNormal();
       this.printer.bold(false);
       
       this.printer.drawLine();
@@ -167,19 +160,24 @@ class PrinterService {
         this.printer.println('*** CANCELLED ***');
         this.printer.alignLeft();
         this.printer.bold(false);
-        this.printer.println(`Cancelled: ${new Date(transaction.cancelledAt).toLocaleString()}`);
+        this.printer.setTextSize(0, 0);
+        this.printer.println(`Cancelled: ${new Date(transaction.cancelledAt).toLocaleDateString()}`);
         this.printer.println(`Reason: ${transaction.cancellationReason}`);
+        this.printer.setTextNormal();
       }
       
       if (transaction.notes) {
         this.printer.newLine();
+        this.printer.setTextSize(0, 0);
         this.printer.println(`Notes: ${transaction.notes}`);
+        this.printer.setTextNormal();
       }
       
       this.printer.newLine();
       this.printer.alignCenter();
+      this.printer.setTextSize(0, 0);
       this.printer.println('Thank you for your visit!');
-      this.printer.println('Please keep this receipt for your records');
+      this.printer.setTextNormal();
       
       this.printer.cut();
       

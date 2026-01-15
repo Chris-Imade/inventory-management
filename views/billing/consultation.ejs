@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing - Consultation - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/lucide.js?v=1"></script>
+</head>
+<body>
+  <div class="app-container">
+    <%- include('../partials/sidebar', { activePage: 'billing' }) %>
+    
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 class="page-title">Billing - Consultation</h1>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="content-wrapper">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Consultation Details</h2>
+          </div>
+          <div class="card-body">
+            <form id="consultationForm">
+              <input type="hidden" id="billId" value="<%= bill ? bill._id : '' %>">
+              
+              <div class="form-group">
+                <label>Select Doctor Type <span style="color: var(--danger);">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-card">
+                    <input type="radio" name="consultationType" value="House Doctor" data-price="5000" <%= bill && bill.consultation && bill.consultation.type === 'House Doctor' ? 'checked' : '' %> required>
+                    <div class="radio-card-content">
+                      <i data-lucide="stethoscope" class="icon icon-lg"></i>
+                      <span>House Doctor</span>
+                      <strong>₦5,000</strong>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="consultationType" value="Cardiologist" data-price="30000" <%= bill && bill.consultation && bill.consultation.type === 'Cardiologist' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="heart-pulse" class="icon icon-lg"></i>
+                      <span>Cardiologist</span>
+                      <strong>₦30,000</strong>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="consultationType" value="Neurologist" data-price="30000" <%= bill && bill.consultation && bill.consultation.type === 'Neurologist' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="brain" class="icon icon-lg"></i>
+                      <span>Neurologist</span>
+                      <strong>₦30,000</strong>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="consultationType" value="Dermatologist" data-price="30000" <%= bill && bill.consultation && bill.consultation.type === 'Dermatologist' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="droplet" class="icon icon-lg"></i>
+                      <span>Dermatologist</span>
+                      <strong>₦30,000</strong>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="isEmergency" <%= bill && bill.consultation && bill.consultation.isEmergency ? 'checked' : '' %>>
+                  <span>Emergency (+₦10,000)</span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="consultationPrice">Consultation Price (Editable for this bill only)</label>
+                <input type="number" id="consultationPrice" class="form-control" min="0" step="0.01" value="<%= bill && bill.consultation ? bill.consultation.price : '5000' %>">
+              </div>
+
+              <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/billing/cards?billId=' + document.getElementById('billId').value">
+                  <i data-lucide="arrow-left" class="icon icon-sm"></i>
+                  Back
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  <i data-lucide="save" class="icon icon-sm"></i>
+                  Save & Continue
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="printBill('consultation')">
+                  <i data-lucide="printer" class="icon icon-sm"></i>
+                  Print Bill
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const consultationPrices = {
+      'House Doctor': 5000,
+      'Cardiologist': 30000,
+      'Neurologist': 30000,
+      'Dermatologist': 30000
+    };
+
+    document.querySelectorAll('input[name="consultationType"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const basePrice = parseInt(e.target.dataset.price);
+        const isEmergency = document.getElementById('isEmergency').checked;
+        const totalPrice = basePrice + (isEmergency ? 10000 : 0);
+        document.getElementById('consultationPrice').value = totalPrice;
+      });
+    });
+
+    document.getElementById('isEmergency').addEventListener('change', (e) => {
+      const selectedType = document.querySelector('input[name="consultationType"]:checked');
+      if (selectedType) {
+        const basePrice = parseInt(selectedType.dataset.price);
+        const totalPrice = basePrice + (e.target.checked ? 10000 : 0);
+        document.getElementById('consultationPrice').value = totalPrice;
+      }
+    });
+
+    document.getElementById('consultationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const billId = document.getElementById('billId').value;
+      if (!billId) {
+        alert('Please complete the Cards section first');
+        window.location.href = '/billing/cards';
+        return;
+      }
+
+      const consultationType = document.querySelector('input[name="consultationType"]:checked')?.value;
+      const isEmergency = document.getElementById('isEmergency').checked;
+      const price = parseFloat(document.getElementById('consultationPrice').value);
+      
+      if (!consultationType) {
+        alert('Please select a consultation type');
+        return;
+      }
+
+      const basePrice = consultationPrices[consultationType];
+      const emergencyFee = isEmergency ? 10000 : 0;
+      
+      try {
+        const response = await fetch(`/api/billing/bills/${billId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            consultation: {
+              type: consultationType,
+              price: price - emergencyFee,
+              isEmergency,
+              emergencyFee
+            }
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          window.location.href = `/billing/drugs?billId=${billId}`;
+        } else {
+          alert('Error saving consultation');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving consultation');
+      }
+    });
+
+    async function printBill(section) {
+      const billId = document.getElementById('billId').value;
+      if (!billId) {
+        alert('Please save the consultation first');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/billing/bills/${billId}/print?section=${section}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(generatePrintHTML(data.data));
+          printWindow.document.close();
+          printWindow.print();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error printing bill');
+      }
+    }
+
+    function generatePrintHTML(billData) {
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bill - ${billData.billNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { text-align: center; }
+            .bill-header { margin-bottom: 20px; }
+            .section { margin: 20px 0; }
+            .section h3 { border-bottom: 2px solid #333; padding-bottom: 5px; }
+            .item { display: flex; justify-content: space-between; padding: 5px 0; }
+            .total { font-weight: bold; font-size: 1.2em; margin-top: 20px; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h1>Health Haven</h1>
+          <div class="bill-header">
+            <p><strong>Bill Number:</strong> ${billData.billNumber}</p>
+            <p><strong>Patient:</strong> ${billData.patientName || 'N/A'}</p>
+            <p><strong>Patient ID:</strong> ${billData.patientId || 'N/A'}</p>
+            <p><strong>Date:</strong> ${new Date(billData.createdAt).toLocaleString()}</p>
+          </div>
+      `;
+      
+      billData.sections.forEach(section => {
+        html += `<div class="section"><h3>${section.name}</h3>`;
+        section.items.forEach(item => {
+          html += `<div class="item"><span>${item.name}${item.details ? ' - ' + item.details : ''}</span><span>₦${item.price ? item.price.toFixed(2) : '0.00'}</span></div>`;
+        });
+        if (section.subtotal > 0) {
+          html += `<div class="item" style="font-weight: bold;"><span>Subtotal:</span><span>₦${section.subtotal.toFixed(2)}</span></div>`;
+        }
+        html += `</div>`;
+      });
+      
+      html += `<div class="total">TOTAL: ₦${billData.total.toFixed(2)}</div>`;
+      html += `</body></html>`;
+      
+      return html;
+    }
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>

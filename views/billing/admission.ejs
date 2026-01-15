@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing - Admission Fee - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/lucide.js?v=1"></script>
+</head>
+<body>
+  <div class="app-container">
+    <%- include('../partials/sidebar', { activePage: 'billing' }) %>
+    
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 class="page-title">Billing - Admission Fee</h1>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="content-wrapper">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Admission Fee Selection</h2>
+          </div>
+          <div class="card-body">
+            <form id="admissionForm">
+              <input type="hidden" id="billId" value="<%= bill ? bill._id : '' %>">
+              
+              <div class="form-group">
+                <label>Select Admission Type</label>
+                <div class="radio-group">
+                  <label class="radio-card">
+                    <input type="radio" name="admissionType" value="VIP" data-price="35000" <%= bill && bill.admissionFee && bill.admissionFee.type === 'VIP' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="crown" class="icon icon-lg"></i>
+                      <span>VIP</span>
+                      <strong>₦35,000</strong>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="admissionType" value="Private" data-price="30000" <%= bill && bill.admissionFee && bill.admissionFee.type === 'Private' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="door-closed" class="icon icon-lg"></i>
+                      <span>Private</span>
+                      <strong>₦30,000</strong>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="admissionType" value="Shared Room" data-price="20000" <%= bill && bill.admissionFee && bill.admissionFee.type === 'Shared Room' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="bed-double" class="icon icon-lg"></i>
+                      <span>Shared Room</span>
+                      <strong>₦20,000</strong>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="admissionType" value="Nursery Care" data-price="5000" <%= bill && bill.admissionFee && bill.admissionFee.type === 'Nursery Care' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="baby" class="icon icon-lg"></i>
+                      <span>Nursery Care</span>
+                      <strong>₦5,000</strong>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/billing/procedure?billId=' + document.getElementById('billId').value">
+                  <i data-lucide="arrow-left" class="icon icon-sm"></i>
+                  Back
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  <i data-lucide="save" class="icon icon-sm"></i>
+                  Save Bill
+                </button>
+                <button type="button" class="btn btn-success" onclick="completeBill()">
+                  <i data-lucide="check-circle" class="icon icon-sm"></i>
+                  Complete & Pay
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="printBill('admission')">
+                  <i data-lucide="printer" class="icon icon-sm"></i>
+                  Print Full Bill
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('admissionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveBill();
+    });
+
+    async function saveBill() {
+      const billId = document.getElementById('billId').value;
+      if (!billId) {
+        alert('Please complete previous sections first');
+        window.location.href = '/billing/cards';
+        return;
+      }
+
+      const admissionType = document.querySelector('input[name="admissionType"]:checked');
+      const admissionFee = admissionType ? {
+        type: admissionType.value,
+        price: parseFloat(admissionType.dataset.price)
+      } : null;
+
+      try {
+        const response = await fetch(`/api/billing/bills/${billId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admissionFee }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('Bill saved successfully!');
+          return true;
+        } else {
+          alert('Error saving admission fee');
+          return false;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving admission fee');
+        return false;
+      }
+    }
+
+    async function completeBill() {
+      const saved = await saveBill();
+      if (!saved) return;
+
+      const billId = document.getElementById('billId').value;
+      
+      if (confirm('Mark this bill as PAID? This will deduct inventory stock for drugs.')) {
+        try {
+          const response = await fetch(`/api/billing/bills/${billId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'PAID' }),
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            alert('Bill completed and marked as PAID!');
+            printBill('admission');
+            setTimeout(() => {
+              window.location.href = '/billing/cards';
+            }, 1000);
+          } else {
+            alert('Error completing bill: ' + (data.message || 'Unknown error'));
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error completing bill');
+        }
+      }
+    }
+
+    async function printBill(section) {
+      const billId = document.getElementById('billId').value;
+      if (!billId) {
+        alert('Please save first');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/billing/bills/${billId}/print?section=${section}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(generatePrintHTML(data.data));
+          printWindow.document.close();
+          printWindow.print();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error printing bill');
+      }
+    }
+
+    function generatePrintHTML(billData) {
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bill - ${billData.billNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { text-align: center; }
+            .bill-header { margin-bottom: 20px; }
+            .section { margin: 20px 0; }
+            .section h3 { border-bottom: 2px solid #333; padding-bottom: 5px; }
+            .item { display: flex; justify-content: space-between; padding: 5px 0; }
+            .total { font-weight: bold; font-size: 1.2em; margin-top: 20px; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h1>Health Haven</h1>
+          <div class="bill-header">
+            <p><strong>Bill Number:</strong> ${billData.billNumber}</p>
+            <p><strong>Patient:</strong> ${billData.patientName || 'N/A'}</p>
+            <p><strong>Patient ID:</strong> ${billData.patientId || 'N/A'}</p>
+            <p><strong>Date:</strong> ${new Date(billData.createdAt).toLocaleString()}</p>
+          </div>
+      `;
+      
+      billData.sections.forEach(section => {
+        html += `<div class="section"><h3>${section.name}</h3>`;
+        section.items.forEach(item => {
+          html += `<div class="item"><span>${item.name}${item.details ? ' - ' + item.details : ''}</span><span>₦${item.price ? item.price.toFixed(2) : '0.00'}</span></div>`;
+        });
+        if (section.subtotal > 0) {
+          html += `<div class="item" style="font-weight: bold;"><span>Subtotal:</span><span>₦${section.subtotal.toFixed(2)}</span></div>`;
+        }
+        html += `</div>`;
+      });
+      
+      html += `<div class="total">TOTAL: ₦${billData.total.toFixed(2)}</div>`;
+      html += `</body></html>`;
+      
+      return html;
+    }
+
+    lucide.createIcons();
+  </script>
+</body>
+</html>

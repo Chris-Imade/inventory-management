@@ -1,0 +1,125 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <span class="sidebar-logo-icon"><i data-lucide="activity" class="icon icon-lg"></i></span>
+      <span class="sidebar-logo-text">Health Haven</span>
+    </div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+      <i data-lucide="menu" id="toggleIcon" class="icon icon-md"></i>
+    </button>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <a href="/dashboard" class="nav-item <%= activePage === 'dashboard' ? 'active' : '' %>" data-tooltip="Dashboard">
+      <i data-lucide="layout-dashboard" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Dashboard</span>
+    </a>
+    
+    <a href="/inventory" class="nav-item <%= activePage === 'inventory' ? 'active' : '' %>" data-tooltip="Inventory">
+      <i data-lucide="package" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Inventory</span>
+    </a>
+    
+    <a href="/pos" class="nav-item <%= activePage === 'pos' ? 'active' : '' %>" data-tooltip="Point of Sale">
+      <i data-lucide="shopping-cart" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Point of Sale</span>
+    </a>
+    
+    <div class="nav-item-group">
+      <button class="nav-item nav-item-expandable <%= activePage === 'billing' ? 'active' : '' %>" onclick="toggleBillingMenu()" data-tooltip="Billing">
+        <i data-lucide="file-text" class="nav-item-icon icon icon-md"></i>
+        <span class="nav-item-text">Billing</span>
+        <i data-lucide="chevron-down" class="nav-item-chevron icon icon-sm"></i>
+      </button>
+      <div class="nav-submenu" id="billingSubmenu">
+        <a href="/billing/cards" class="nav-subitem" data-tooltip="Cards">
+          <span class="nav-subitem-text">1. Cards</span>
+        </a>
+        <a href="/billing/consultation" class="nav-subitem" data-tooltip="Consultation">
+          <span class="nav-subitem-text">2. Consultation</span>
+        </a>
+        <a href="/billing/drugs" class="nav-subitem" data-tooltip="Drugs / Consumables">
+          <span class="nav-subitem-text">3. Drugs / Consumables</span>
+        </a>
+        <a href="/billing/procedure" class="nav-subitem" data-tooltip="Procedure">
+          <span class="nav-subitem-text">4. Procedure</span>
+        </a>
+        <a href="/billing/admission" class="nav-subitem" data-tooltip="Admission Fee">
+          <span class="nav-subitem-text">5. Admission Fee</span>
+        </a>
+      </div>
+    </div>
+    
+    <a href="/transactions" class="nav-item <%= activePage === 'transactions' ? 'active' : '' %>" data-tooltip="Transactions">
+      <i data-lucide="receipt" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Transactions</span>
+    </a>
+    
+    <a href="/alerts" class="nav-item <%= activePage === 'alerts' ? 'active' : '' %>" data-tooltip="Alerts">
+      <i data-lucide="bell" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Alerts</span>
+    </a>
+    
+    <a href="/reports" class="nav-item <%= activePage === 'reports' ? 'active' : '' %>" data-tooltip="Reports">
+      <i data-lucide="bar-chart-2" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Reports</span>
+    </a>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <button class="nav-item" onclick="logout()" data-tooltip="Logout" style="width: 100%; border: none; background: none;">
+      <i data-lucide="log-out" class="nav-item-icon icon icon-md"></i>
+      <span class="nav-item-text">Logout</span>
+    </button>
+  </div>
+</aside>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const icon = document.getElementById('toggleIcon');
+    sidebar.classList.toggle('collapsed');
+    const iconName = sidebar.classList.contains('collapsed') ? 'menu' : 'x';
+    icon.setAttribute('data-lucide', iconName);
+    lucide.createIcons();
+    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+  }
+
+  function toggleBillingMenu() {
+    const submenu = document.getElementById('billingSubmenu');
+    const button = submenu.previousElementSibling;
+    const chevron = button.querySelector('.nav-item-chevron');
+    
+    submenu.classList.toggle('expanded');
+    button.classList.toggle('expanded');
+    
+    const isExpanded = submenu.classList.contains('expanded');
+    chevron.setAttribute('data-lucide', isExpanded ? 'chevron-up' : 'chevron-down');
+    lucide.createIcons();
+    
+    localStorage.setItem('billingMenuExpanded', isExpanded);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.getElementById('sidebar').classList.add('collapsed');
+      document.getElementById('toggleIcon').setAttribute('data-lucide', 'menu');
+    }
+    
+    if (localStorage.getItem('billingMenuExpanded') === 'true' || '<%= activePage %>' === 'billing') {
+      const submenu = document.getElementById('billingSubmenu');
+      const button = submenu.previousElementSibling;
+      const chevron = button.querySelector('.nav-item-chevron');
+      submenu.classList.add('expanded');
+      button.classList.add('expanded');
+      chevron.setAttribute('data-lucide', 'chevron-up');
+    }
+    
+    lucide.createIcons();
+  });
+
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  }
+</script>

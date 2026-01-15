@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing - Cards - Health Haven</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/lucide.js?v=1"></script>
+</head>
+<body>
+  <div class="app-container">
+    <%- include('../partials/sidebar', { activePage: 'billing' }) %>
+    
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 class="page-title">Billing - Cards</h1>
+        <div class="flex items-center gap-md">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <span class="text-muted" style="font-size: 0.875rem; display: flex; align-items: center; gap: 0.25rem;">
+              <i data-lucide="user" class="icon icon-sm"></i><%= user %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="content-wrapper">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Patient Information & Card Selection</h2>
+          </div>
+          <div class="card-body">
+            <form id="cardsForm">
+              <input type="hidden" id="billId" value="<%= bill ? bill._id : '' %>">
+              
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="patientName">Patient Name</label>
+                  <input type="text" id="patientName" class="form-control" required value="<%= bill && bill.patientName ? bill.patientName : '' %>">
+                </div>
+                
+                <div class="form-group">
+                  <label for="patientId">Patient ID</label>
+                  <input type="text" id="patientId" class="form-control" value="<%= bill && bill.patientId ? bill.patientId : '' %>">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Select Card Type <span style="color: var(--danger);">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-card">
+                    <input type="radio" name="cardType" value="Personal Card" <%= bill && bill.cardType === 'Personal Card' ? 'checked' : '' %> required>
+                    <div class="radio-card-content">
+                      <i data-lucide="user" class="icon icon-lg"></i>
+                      <span>Personal Card</span>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="cardType" value="Family Card" <%= bill && bill.cardType === 'Family Card' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="users" class="icon icon-lg"></i>
+                      <span>Family Card</span>
+                    </div>
+                  </label>
+                  
+                  <label class="radio-card">
+                    <input type="radio" name="cardType" value="Premium Card" <%= bill && bill.cardType === 'Premium Card' ? 'checked' : '' %>>
+                    <div class="radio-card-content">
+                      <i data-lucide="star" class="icon icon-lg"></i>
+                      <span>Premium Card</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">
+                  <i data-lucide="save" class="icon icon-sm"></i>
+                  Save & Continue
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="printBill('cards')">
+                  <i data-lucide="printer" class="icon icon-sm"></i>
+                  Print Bill
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('cardsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const billId = document.getElementById('billId').value;
+      const patientName = document.getElementById('patientName').value;
+      const patientId = document.getElementById('patientId').value;
+      const cardType = document.querySelector('input[name="cardType"]:checked')?.value;
+      
+      if (!cardType) {
+        alert('Please select a card type');
+        return;
+      }
+      
+      try {
+        const url = billId ? `/api/billing/bills/${billId}` : '/api/billing/bills';
+        const method = billId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientName, patientId, cardType }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          window.location.href = `/billing/consultation?billId=${data.data._id}`;
+        } else {
+          alert('Error saving card selection');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving card selection');
+      }
+    });
+    
+    async function printBill(section) {
+      const billId = document.getElementById('billId').value;
+      if (!billId) {
+        alert('Please save the card selection first');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/billing/bills/${billId}/print?section=${section}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(generatePrintHTML(data.data));
+          printWindow.document.close();
+          printWindow.print();
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error printing bill');
+      }
+    }
+    
+    function generatePrintHTML(billData) {
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bill - ${billData.billNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { text-align: center; }
+            .bill-header { margin-bottom: 20px; }
+            .section { margin: 20px 0; }
+            .section h3 { border-bottom: 2px solid #333; padding-bottom: 5px; }
+            .item { display: flex; justify-content: space-between; padding: 5px 0; }
+            .total { font-weight: bold; font-size: 1.2em; margin-top: 20px; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h1>Health Haven</h1>
+          <div class="bill-header">
+            <p><strong>Bill Number:</strong> ${billData.billNumber}</p>
+            <p><strong>Patient:</strong> ${billData.patientName || 'N/A'}</p>
+            <p><strong>Patient ID:</strong> ${billData.patientId || 'N/A'}</p>
+            <p><strong>Date:</strong> ${new Date(billData.createdAt).toLocaleString()}</p>
+          </div>
+      `;
+      
+      billData.sections.forEach(section => {
+        html += `<div class="section"><h3>${section.name}</h3>`;
+        section.items.forEach(item => {
+          html += `<div class="item"><span>${item.name}${item.details ? ' - ' + item.details : ''}</span><span>₦${item.price ? item.price.toFixed(2) : '0.00'}</span></div>`;
+        });
+        if (section.subtotal > 0) {
+          html += `<div class="item" style="font-weight: bold;"><span>Subtotal:</span><span>₦${section.subtotal.toFixed(2)}</span></div>`;
+        }
+        html += `</div>`;
+      });
+      
+      html += `<div class="total">TOTAL: ₦${billData.total.toFixed(2)}</div>`;
+      html += `</body></html>`;
+      
+      return html;
+    }
+    
+    lucide.createIcons();
+  </script>
+</body>
+</html>

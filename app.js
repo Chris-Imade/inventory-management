@@ -58,6 +58,11 @@ app.get('/pos', isAuthenticated, webController.renderPOS);
 app.get('/transactions', isAuthenticated, webController.renderTransactions);
 app.get('/alerts', isAuthenticated, webController.renderAlerts);
 app.get('/reports', isAuthenticated, webController.renderReports);
+app.get('/billing/cards', isAuthenticated, webController.renderBillingCards);
+app.get('/billing/consultation', isAuthenticated, webController.renderBillingConsultation);
+app.get('/billing/drugs', isAuthenticated, webController.renderBillingDrugs);
+app.get('/billing/procedure', isAuthenticated, webController.renderBillingProcedure);
+app.get('/billing/admission', isAuthenticated, webController.renderBillingAdmission);
 
 app.use('/api', apiRoutes);
 
